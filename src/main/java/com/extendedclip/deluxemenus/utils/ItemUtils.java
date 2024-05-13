@@ -70,7 +70,11 @@ public final class ItemUtils {
     }
 
     public static boolean hasArmorMeta(@NotNull final ItemStack itemStack) {
-        return itemStack.getItemMeta() instanceof ArmorMeta;
+        try {
+            return itemStack.getItemMeta() instanceof ArmorMeta;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     /**
