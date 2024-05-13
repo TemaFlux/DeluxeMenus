@@ -1,5 +1,6 @@
 package com.extendedclip.deluxemenus;
 
+import com.cryptomorin.xseries.XMaterial;
 import com.extendedclip.deluxemenus.cache.SimpleCache;
 import com.extendedclip.deluxemenus.commands.DeluxeMenusCommands;
 import com.extendedclip.deluxemenus.config.DeluxeMenusConfig;
@@ -16,7 +17,6 @@ import com.extendedclip.deluxemenus.placeholder.Expansion;
 import com.extendedclip.deluxemenus.updatechecker.UpdateChecker;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.Messages;
-import com.extendedclip.deluxemenus.utils.VersionHelper;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
@@ -30,11 +30,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -116,11 +112,7 @@ public class DeluxeMenus extends JavaPlugin {
       }
     }
 
-    if (!VersionHelper.IS_ITEM_LEGACY) {
-      head = new ItemStack(Material.PLAYER_HEAD, 1);
-    } else {
-      head = new ItemStack(Material.valueOf("SKULL_ITEM"), 1, (short) 3);
-    }
+    head = XMaterial.PLAYER_HEAD.parseItem();
 
     menuConfig = new DeluxeMenusConfig(this);
     if (menuConfig.loadDefConfig()) {
@@ -262,8 +254,8 @@ public class DeluxeMenus extends JavaPlugin {
   }
 
   private void startMetrics() {
-    Metrics metrics = new Metrics(this, 445);
-    metrics.addCustomChart(new Metrics.SingleLineChart("menus", Menu::getLoadedMenuSize));
+    // Metrics metrics = new Metrics(this, 445);
+    // metrics.addCustomChart(new Metrics.SingleLineChart("menus", Menu::getLoadedMenuSize));
   }
 
   public void connect(Player p, String server) {

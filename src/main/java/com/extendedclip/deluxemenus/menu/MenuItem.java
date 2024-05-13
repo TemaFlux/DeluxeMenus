@@ -1,5 +1,6 @@
 package com.extendedclip.deluxemenus.menu;
 
+import com.cryptomorin.xseries.XMaterial;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.hooks.ItemHook;
 import com.extendedclip.deluxemenus.nbt.NbtProvider;
@@ -10,38 +11,22 @@ import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.block.Banner;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.type.Light;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ArmorMeta;
-import org.bukkit.inventory.meta.BannerMeta;
-import org.bukkit.inventory.meta.BlockDataMeta;
-import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
-import org.bukkit.inventory.meta.FireworkEffectMeta;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -100,7 +85,8 @@ public class MenuItem {
 
         // The item is neither a water bottle nor plugin hook item
         if (itemStack == null) {
-            final Material material = Material.getMaterial(stringMaterial.toUpperCase(Locale.ROOT));
+            final XMaterial xMaterial = XMaterial.matchXMaterial(stringMaterial.toUpperCase(Locale.ROOT)).orElse(null);
+            final Material material = xMaterial == null ? null : xMaterial.parseMaterial();
             if (material == null) {
                 DeluxeMenus.debug(
                         DebugLevel.HIGHEST,
