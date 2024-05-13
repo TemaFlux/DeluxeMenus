@@ -14,6 +14,7 @@ score = "4.23.10.8"
 nashorn = "15.4"
 adventure-platform = "4.3.2"
 adventure-minimessage = "4.15.0-SNAPSHOT"
+xseries = "9.10.0"
 
 [libraries]
 # Compile only
@@ -31,3 +32,4 @@ score = { module = "com.github.Ssomar-Developement:SCore", version.ref = "score"
 nashorn = { module = "org.openjdk.nashorn:nashorn-core", version.ref = "nashorn" }
 adventure-platform = { module = "net.kyori:adventure-platform-bukkit", version.ref = "adventure-platform" }
 adventure-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure-minimessage" }
+xseries = { module = "com.github.cryptomorin:XSeries", version.ref = "xseries" }
