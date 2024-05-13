@@ -5,6 +5,7 @@ import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.menu.MenuItem;
+import com.extendedclip.deluxemenus.requirement.Requirement;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -12,7 +13,10 @@ import com.google.common.cache.CacheBuilder;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,6 +27,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class PlayerListener implements Listener {
@@ -153,14 +158,48 @@ public class PlayerListener implements Listener {
       this.shiftCache.put(player.getUniqueId(), System.currentTimeMillis());
     }
 
+    Consumer<Optional<RequirementList>> giveItem = requirements -> {
+      if (requirements != null && requirements.isPresent()) {
+        int successful = 0;
+        RequirementList requirementList = requirements.get();
+        boolean result = true;
+
+        for (Requirement r : requirementList.getRequirements()) {
+          if (r.evaluate(holder)) {
+            successful = successful + 1;
+            if (requirementList.stopAtSuccess() && successful >= requirementList.getMinimumRequirements()) {
+              break;
+            }
+          } else {
+            if (!r.isOptional()) {
+              result = false;
+              break;
+            }
+          }
+        }
+
+        if (!result || successful < requirementList.getMinimumRequirements()) return;
+      }
+
+      if (item.options().giveItem()) {
+        ItemStack itemStack = item.getItemStack(holder);
+
+        if (itemStack != null && itemStack.getType() != Material.AIR) {
+          player.getInventory().addItem(itemStack);
+        }
+      }
+    };
+
     if (handleClick(player, holder, item.options().clickHandler(),
             item.options().clickRequirements())) {
+      giveItem.accept(item.options().clickRequirements());
       return;
     }
 
     if (event.isShiftClick() && event.isLeftClick()) {
       if (handleClick(player, holder, item.options().shiftLeftClickHandler(),
               item.options().shiftLeftClickRequirements())) {
+        giveItem.accept(item.options().shiftLeftClickRequirements());
         return;
       }
     }
@@ -168,6 +207,7 @@ public class PlayerListener implements Listener {
     if (event.isShiftClick() && event.isRightClick()) {
       if (handleClick(player, holder, item.options().shiftRightClickHandler(),
               item.options().shiftRightClickRequirements())) {
+        giveItem.accept(item.options().shiftRightClickRequirements());
         return;
       }
     }
@@ -175,6 +215,7 @@ public class PlayerListener implements Listener {
     if (event.getClick() == ClickType.LEFT) {
       if (handleClick(player, holder, item.options().leftClickHandler(),
               item.options().leftClickRequirements())) {
+        giveItem.accept(item.options().leftClickRequirements());
         return;
       }
     }
@@ -182,6 +223,7 @@ public class PlayerListener implements Listener {
     if (event.getClick() == ClickType.RIGHT) {
       if (handleClick(player, holder, item.options().rightClickHandler(),
               item.options().rightClickRequirements())) {
+        giveItem.accept(item.options().rightClickRequirements());
         return;
       }
     }
@@ -189,9 +231,12 @@ public class PlayerListener implements Listener {
     if (event.getClick() == ClickType.MIDDLE) {
       if (handleClick(player, holder, item.options().middleClickHandler(),
               item.options().middleClickRequirements())) {
+        giveItem.accept(item.options().middleClickRequirements());
         return;
       }
     }
+
+    giveItem.accept(null);
   }
 
   /**

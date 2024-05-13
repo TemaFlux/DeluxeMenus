@@ -74,6 +74,8 @@ public class MenuItemOptions {
     private final RequirementList shiftRightClickRequirements;
     private final RequirementList middleClickRequirements;
 
+    private final boolean giveItem;
+
     private MenuItemOptions(final @NotNull MenuItemOptionsBuilder builder) {
         this.material = builder.material;
         this.data = builder.data;
@@ -122,6 +124,7 @@ public class MenuItemOptions {
         this.shiftLeftClickRequirements = builder.shiftLeftClickRequirements;
         this.shiftRightClickRequirements = builder.shiftRightClickRequirements;
         this.middleClickRequirements = builder.middleClickRequirements;
+        this.giveItem = builder.giveItem;
     }
 
     public static @NotNull MenuItemOptionsBuilder builder() {
@@ -320,6 +323,10 @@ public class MenuItemOptions {
         return Optional.ofNullable(middleClickRequirements);
     }
 
+    public boolean giveItem() {
+        return giveItem;
+    }
+
     public @NotNull MenuItemOptionsBuilder asBuilder() {
         return MenuItemOptions.builder()
                 .material(this.material)
@@ -366,7 +373,8 @@ public class MenuItemOptions {
                 .rightClickRequirements(this.rightClickRequirements)
                 .shiftLeftClickRequirements(this.shiftLeftClickRequirements)
                 .shiftRightClickRequirements(this.shiftRightClickRequirements)
-                .middleClickRequirements(this.middleClickRequirements);
+                .middleClickRequirements(this.middleClickRequirements)
+                .giveItem(this.giveItem);
     }
 
     public static class MenuItemOptionsBuilder {
@@ -426,6 +434,8 @@ public class MenuItemOptions {
         private RequirementList shiftLeftClickRequirements;
         private RequirementList shiftRightClickRequirements;
         private RequirementList middleClickRequirements;
+
+        private boolean giveItem;
 
         private MenuItemOptionsBuilder() {
         }
@@ -656,6 +666,11 @@ public class MenuItemOptions {
 
         public MenuItemOptionsBuilder middleClickRequirements(final @Nullable RequirementList middleClickRequirements) {
             this.middleClickRequirements = middleClickRequirements;
+            return this;
+        }
+
+        public MenuItemOptionsBuilder giveItem(final boolean giveItem) {
+            this.giveItem = giveItem;
             return this;
         }
 
