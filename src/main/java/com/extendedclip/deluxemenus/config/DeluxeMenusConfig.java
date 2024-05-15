@@ -570,7 +570,7 @@ public class DeluxeMenusConfig {
     RequirementList orl = null;
 
     if (c.contains(pre + "open_requirement")) {
-      orl = this.getRequirements(c, pre + "open_requirement");
+      orl = this.getRequirements(c, key, pre + "open_requirement");
     }
 
     Map<Integer, TreeMap<Integer, MenuItem>> items = loadMenuItems(c, key, mainConfig, pattern);
@@ -605,7 +605,7 @@ public class DeluxeMenusConfig {
             // If it has requirements, add them
             if (c.contains(pre + "args." + arg + ".requirements")) {
               debug("arg has requirements: " + arg);
-              argRequirements.add(this.getRequirements(c, pre + "args." + arg));
+              argRequirements.add(this.getRequirements(c, key, pre + "args." + arg));
             }
             // Always add the arg itself
             args.add(arg);
@@ -990,14 +990,14 @@ public class DeluxeMenusConfig {
       }
 
       if (c.contains(currentPath + "view_requirement")) {
-        builder.viewRequirements(this.getRequirements(c, currentPath + "view_requirement"));
+        builder.viewRequirements(this.getRequirements(c, key, currentPath + "view_requirement"));
       }
 
       if (c.contains(currentPath + "click_commands")) {
         builder.clickHandler(getClickHandler(c, currentPath + "click_commands"));
         if (c.contains(currentPath + "click_requirement")) {
           builder.clickRequirements(
-              this.getRequirements(c, currentPath + "click_requirement"));
+              this.getRequirements(c, key, currentPath + "click_requirement"));
         }
       }
 
@@ -1005,7 +1005,7 @@ public class DeluxeMenusConfig {
         builder.leftClickHandler(getClickHandler(c, currentPath + "left_click_commands"));
         if (c.contains(currentPath + "left_click_requirement")) {
           builder.leftClickRequirements(
-              this.getRequirements(c, currentPath + "left_click_requirement"));
+              this.getRequirements(c, key, currentPath + "left_click_requirement"));
         }
       }
 
@@ -1013,7 +1013,7 @@ public class DeluxeMenusConfig {
         builder.rightClickHandler(getClickHandler(c, currentPath + "right_click_commands"));
         if (c.contains(currentPath + "right_click_requirement")) {
           builder.rightClickRequirements(
-              this.getRequirements(c, currentPath + "right_click_requirement"));
+              this.getRequirements(c, key, currentPath + "right_click_requirement"));
         }
       }
 
@@ -1022,7 +1022,7 @@ public class DeluxeMenusConfig {
             getClickHandler(c, currentPath + "shift_left_click_commands"));
         if (c.contains(currentPath + "shift_left_click_requirement")) {
           builder.shiftLeftClickRequirements(
-              this.getRequirements(c, currentPath + "shift_left_click_requirement"));
+              this.getRequirements(c, key, currentPath + "shift_left_click_requirement"));
         }
       }
 
@@ -1031,7 +1031,7 @@ public class DeluxeMenusConfig {
             getClickHandler(c, currentPath + "shift_right_click_commands"));
         if (c.contains(currentPath + "shift_right_click_requirement")) {
           builder.shiftRightClickRequirements(
-              this.getRequirements(c, currentPath + "shift_right_click_requirement"));
+              this.getRequirements(c, key, currentPath + "shift_right_click_requirement"));
         }
       }
 
@@ -1039,7 +1039,7 @@ public class DeluxeMenusConfig {
         builder.middleClickHandler(getClickHandler(c, currentPath + "middle_click_commands"));
         if (c.contains(currentPath + "middle_click_requirement")) {
           builder.middleClickRequirements(
-              this.getRequirements(c, currentPath + "middle_click_requirement"));
+              this.getRequirements(c, key, currentPath + "middle_click_requirement"));
         }
       }
 
@@ -1105,7 +1105,7 @@ public class DeluxeMenusConfig {
     return menuItems;
   }
 
-  private RequirementList getRequirements(FileConfiguration c, String path) {
+  private RequirementList getRequirements(FileConfiguration c, String menuName, String path) {
 
     debug("requirement path: " + path);
 
@@ -1393,6 +1393,17 @@ public class DeluxeMenusConfig {
                 DebugLevel.HIGHEST,
                 Level.WARNING,
                 "String length requirement at path: " + rPath + " does not contain an input: or object:"
+            );
+          }
+          break;
+        case COOLDOWN:
+          if (c.contains(rPath + ".time")) {
+            req = new CooldownRequirement(menuName, c.getInt(rPath + ".time"));
+          } else {
+            DeluxeMenus.debug(
+                    DebugLevel.HIGHEST,
+                    Level.WARNING,
+                    "Cooldown requirement at path: " + rPath + " does not contain an expression: entry"
             );
           }
           break;
