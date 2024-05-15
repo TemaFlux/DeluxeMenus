@@ -81,7 +81,10 @@ public enum RequirementType {
           Arrays.asList("input", "min", "max")),
   IS_OBJECT(Arrays.asList("is object"),
           "Checks if the given string can be parsed as a given Java object.",
-          Arrays.asList("input", "object"));
+          Arrays.asList("input", "object")),
+
+  COOLDOWN(Collections.singletonList("cooldown"), "Add cooldown after usage", Collections.singletonList("time"))
+  ;
 
   private final List<String> identifier;
   private final String description;
