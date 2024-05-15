@@ -48,7 +48,7 @@ public class Menu extends Command {
       int size, List<String> menuCommands, boolean registerCommand, List<String> args, List<RequirementList> argRequirements, boolean parsePlaceholdersInArguments) {
     super(menuCommands.get(0));
     this.menuName = menuName;
-    this.menuTitle = StringUtils.color(menuTitle);
+    this.menuTitle = menuTitle == null ? null : StringUtils.color(menuTitle);
     this.items = items;
     this.size = size;
     this.menuCommands = menuCommands;
@@ -69,7 +69,7 @@ public class Menu extends Command {
       int size, boolean parsePlaceholdersInArguments) {
     super(menuName);
     this.menuName = menuName;
-    this.menuTitle = StringUtils.color(menuTitle);
+    this.menuTitle = menuTitle == null ? null : StringUtils.color(menuTitle);
     this.items = items;
     this.size = size;
     this.parsePlaceholdersInArguments = parsePlaceholdersInArguments;
@@ -435,7 +435,7 @@ public class Menu extends Command {
         this.openHandler.onClick(holder);
       }
 
-      String title = StringUtils.color(holder.setPlaceholdersAndArguments(this.menuTitle));
+      String title = this.menuTitle == null ? null : StringUtils.color(holder.setPlaceholdersAndArguments(this.menuTitle));
 
       Inventory inventory;
 
