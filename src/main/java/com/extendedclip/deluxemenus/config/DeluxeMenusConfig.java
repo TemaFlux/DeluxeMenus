@@ -12,6 +12,7 @@ import com.extendedclip.deluxemenus.menu.*;
 import com.extendedclip.deluxemenus.requirement.*;
 import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
+import com.extendedclip.deluxemenus.utils.InventoryUtil;
 import com.extendedclip.deluxemenus.utils.LocationUtils;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.DyeColor;
@@ -432,7 +433,7 @@ public class DeluxeMenusConfig {
       title = c.getStringList(pre + "menu_title").get(0);
     }
 
-    if (title == null || title.isEmpty()) {
+    /* if (title == null || title.isEmpty()) {
       DeluxeMenus.debug(
           DebugLevel.HIGHEST,
           Level.SEVERE,
@@ -440,7 +441,7 @@ public class DeluxeMenusConfig {
           "Skipping menu: " + key
       );
       return;
-    }
+    } */
 
     InventoryType type = null;
 
@@ -457,12 +458,6 @@ public class DeluxeMenusConfig {
             "Defaulting to CHEST inventory type."
         );
       }
-    }
-
-    if (c.isString(pre + "menu_title")) {
-      title = c.getString(pre + "menu_title");
-    } else if (c.isList(pre + "menu_title")) {
-      title = c.getStringList(pre + "menu_title").get(0);
     }
 
     List<String> openCommands = new ArrayList<>();
@@ -513,17 +508,19 @@ public class DeluxeMenusConfig {
       }
     }
 
-    int size = 54;
+    List<String> pattern = c.getStringList(pre + "pattern");
+
+    int size; // 54
     if (type == null || type == InventoryType.CHEST) {
-      if (!c.contains(pre + "size")) {
+      /* if (!c.contains(pre + "size")) {
         DeluxeMenus.debug(
             DebugLevel.HIGHEST,
             Level.INFO,
             "Menu size for menu: " + key + " is not present!",
             "Using default size of 54"
         );
-      } else {
-        size = c.getInt(pre + "size");
+      } else { */
+        size = c.getInt(pre + "size", pattern.size() * 9);
 
         if ((size + 1) % 9 == 0)
           size++;
@@ -560,7 +557,7 @@ public class DeluxeMenusConfig {
           );
           size = 54;
         }
-      }
+      // }
     } else {
       size = type.getDefaultSize();
       DeluxeMenus.debug(
@@ -576,7 +573,7 @@ public class DeluxeMenusConfig {
       orl = this.getRequirements(c, pre + "open_requirement");
     }
 
-    Map<Integer, TreeMap<Integer, MenuItem>> items = loadMenuItems(c, key, mainConfig);
+    Map<Integer, TreeMap<Integer, MenuItem>> items = loadMenuItems(c, key, mainConfig, pattern);
 
     if (items == null || items.isEmpty()) {
       DeluxeMenus.debug(
@@ -664,8 +661,7 @@ public class DeluxeMenusConfig {
     menu.setUpdateInterval(updateInterval);
   }
 
-  private Map<Integer, TreeMap<Integer, MenuItem>> loadMenuItems(FileConfiguration c, String name,
-      boolean mainConfig) {
+  private Map<Integer, TreeMap<Integer, MenuItem>> loadMenuItems(FileConfiguration c, String name, boolean mainConfig, List<String> pattern) {
     String itemsPath = "gui_menus." + name + ".items";
 
     if (!mainConfig) {
@@ -682,10 +678,10 @@ public class DeluxeMenusConfig {
       return null;
     }
 
+    Map<String, MenuItemOptions.MenuItemOptionsBuilder> cacheItem = new HashMap<>();
     Map<Integer, TreeMap<Integer, MenuItem>> menuItems = new HashMap<>();
 
     for (String key : itemKeys) {
-
       String currentPath = itemsPath + "." + key + ".";
 
       if (!c.contains(currentPath + "material")) {
@@ -1051,7 +1047,27 @@ public class DeluxeMenusConfig {
         builder.giveItem(c.getBoolean(currentPath + "giveItem"));
       }
 
-      List<Integer> slots = new ArrayList<>();
+      cacheItem.put(key, builder);
+    }
+
+    Map<MenuItemOptions.MenuItemOptionsBuilder, List<Integer>> slotMap = new HashMap<>();
+    Map<Integer, Character> rowMap = InventoryUtil.toRowMap(pattern);
+
+    rowMap.forEach((slotId, id) -> {
+      MenuItemOptions.MenuItemOptionsBuilder builder = cacheItem.get(id.toString());
+      if (builder == null) return;
+
+      List<Integer> slots = slotMap.computeIfAbsent(builder, unused -> new ArrayList<>());
+      slots.add(slotId);
+    });
+
+    for (Map.Entry<String, MenuItemOptions.MenuItemOptionsBuilder> entry : cacheItem.entrySet()) {
+      String key = entry.getKey();
+      MenuItemOptions.MenuItemOptionsBuilder builder = entry.getValue();
+      String currentPath = itemsPath + "." + key + ".";
+
+      List<Integer> slots = slotMap.get(builder);
+      if (slots == null) slots = new ArrayList<>();
 
       if (c.contains(currentPath + "slots") && c.isList(currentPath + "slots")) {
         List<String> confSlots = c.getStringList(currentPath + "slots");
@@ -1065,7 +1081,7 @@ public class DeluxeMenusConfig {
             slots.add(Integer.parseInt(slot));
           }
         }
-      } else {
+      } else if (c.contains(currentPath + "slot")) {
         slots.add(c.getInt(currentPath + "slot", 0));
       }
 
@@ -1085,6 +1101,7 @@ public class DeluxeMenusConfig {
         );
       }
     }
+
     return menuItems;
   }
 
