@@ -159,6 +159,8 @@ public class PlayerListener implements Listener {
     }
 
     Consumer<Optional<RequirementList>> giveItem = requirements -> {
+      if (!item.options().giveItem()) return;
+
       if (requirements != null && requirements.isPresent()) {
         int successful = 0;
         RequirementList requirementList = requirements.get();
@@ -181,12 +183,9 @@ public class PlayerListener implements Listener {
         if (!result || successful < requirementList.getMinimumRequirements()) return;
       }
 
-      if (item.options().giveItem()) {
-        ItemStack itemStack = item.getItemStack(holder);
-
-        if (itemStack != null && itemStack.getType() != Material.AIR) {
-          player.getInventory().addItem(itemStack);
-        }
+      ItemStack itemStack = item.getItemStack(holder);
+      if (itemStack != null && itemStack.getType() != Material.AIR) {
+        player.getInventory().addItem(itemStack);
       }
     };
 
