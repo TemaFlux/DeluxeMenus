@@ -14,11 +14,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class HasItemRequirement extends Requirement {
 
   private final ItemWrapper wrapper;
-  private final boolean invert;
+  private final boolean invert, remove;
 
-  public HasItemRequirement(ItemWrapper wrapper, boolean invert) {
+  public HasItemRequirement(ItemWrapper wrapper, boolean invert, boolean remove) {
     this.wrapper = wrapper;
     this.invert = invert;
+    this.remove = remove;
   }
 
   @Override
@@ -55,7 +56,10 @@ public class HasItemRequirement extends Requirement {
       }
     }
 
-    return invert == (total < wrapper.getAmount());
+    boolean isCan = invert == (total < wrapper.getAmount());
+    if (!remove && !isCan) return false;
+
+    return isCan && removeItems(holder, material);
   }
 
   private boolean isRequiredItem(ItemStack itemToCheck, MenuHolder holder, Material material) {
@@ -145,5 +149,68 @@ public class HasItemRequirement extends Requirement {
       }
     }
     return true;
+  }
+
+  private boolean removeItems(MenuHolder holder, Material material) {
+    ItemStack[] armor = wrapper.checkArmor() ? holder.getViewer().getInventory().getArmorContents() : null;
+    ItemStack[] offHand = wrapper.checkOffhand() ? holder.getViewer().getInventory().getExtraContents() : null;
+    ItemStack[] inventory = holder.getViewer().getInventory().getStorageContents();
+
+    int amountToRemove = wrapper.getAmount();
+
+    for (ItemStack item : inventory) {
+      if (isRequiredItem(item, holder, material)) {
+        int itemAmount = item.getAmount();
+        if (itemAmount <= amountToRemove) {
+          holder.getViewer().getInventory().removeItem(item);
+          amountToRemove -= itemAmount;
+        } else {
+          item.setAmount(itemAmount - amountToRemove);
+          amountToRemove = 0;
+        }
+
+        if (amountToRemove <= 0) {
+          break;
+        }
+      }
+    }
+
+    if (offHand != null && amountToRemove > 0) {
+      for (ItemStack item : offHand) {
+        if (isRequiredItem(item, holder, material)) {
+          int itemAmount = item.getAmount();
+          if (itemAmount <= amountToRemove) {
+            holder.getViewer().getInventory().removeItem(item);
+            amountToRemove -= itemAmount;
+          } else {
+            item.setAmount(itemAmount - amountToRemove);
+            amountToRemove = 0;
+          }
+
+          if (amountToRemove <= 0) break;
+        }
+      }
+    }
+
+    if (armor != null && amountToRemove > 0) {
+      for (ItemStack item : armor) {
+        if (isRequiredItem(item, holder, material)) {
+          int itemAmount = item.getAmount();
+          if (itemAmount <= amountToRemove) {
+            holder.getViewer().getInventory().removeItem(item);
+            amountToRemove -= itemAmount;
+          } else {
+            item.setAmount(itemAmount - amountToRemove);
+            amountToRemove = 0;
+          }
+
+          if (amountToRemove <= 0) {
+            break;
+          }
+        }
+      }
+    }
+
+    return amountToRemove == 0;
   }
 }
