@@ -1223,7 +1223,7 @@ public class DeluxeMenusConfig {
             }
 
           invert = type == RequirementType.DOES_NOT_HAVE_ITEM;
-          req = new HasItemRequirement(wrapper, invert);
+          req = new HasItemRequirement(wrapper, invert, c.getBoolean(rPath + ".remove", false));
           break;
         case HAS_PERMISSION:
         case DOES_NOT_HAVE_PERMISSION:
@@ -1401,9 +1401,9 @@ public class DeluxeMenusConfig {
             req = new CooldownRequirement(menuName, c.getInt(rPath + ".time"));
           } else {
             DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.WARNING,
-                    "Cooldown requirement at path: " + rPath + " does not contain an expression: entry"
+              DebugLevel.HIGHEST,
+              Level.WARNING,
+              "Cooldown requirement at path: " + rPath + " does not contain an expression: entry"
             );
           }
           break;
