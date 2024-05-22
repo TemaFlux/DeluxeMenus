@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextReplacementConfig;
@@ -183,7 +185,7 @@ public class DeluxeMenusCommands implements CommandExecutor {
       );
 
       if (action.hasDelay()) {
-        actionTask.runTaskLater(plugin, action.getDelay(holder));
+        SchedulerUtil.runTaskLater(plugin, target, actionTask, action.getDelay(holder));
 
         plugin.sms(
             sender,
@@ -193,7 +195,7 @@ public class DeluxeMenusCommands implements CommandExecutor {
         return true;
       }
 
-      actionTask.runTask(plugin);
+      SchedulerUtil.runTask(plugin, target, actionTask);
 
       plugin.sms(
           sender,

@@ -1,23 +1,16 @@
 package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.extendedclip.deluxemenus.utils.StringUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MenuHolder implements InventoryHolder {
 
@@ -25,7 +18,7 @@ public class MenuHolder implements InventoryHolder {
     private Player placeholderPlayer;
     private String menuName;
     private Set<MenuItem> activeItems;
-    private BukkitTask updateTask = null;
+    private SchedulerUtil.Task updateTask = null;
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
@@ -47,7 +40,7 @@ public class MenuHolder implements InventoryHolder {
         return viewer.getName();
     }
 
-    public BukkitTask getUpdateTask() {
+    public SchedulerUtil.Task getUpdateTask() {
         return updateTask;
     }
 
@@ -124,7 +117,7 @@ public class MenuHolder implements InventoryHolder {
 
         stopPlaceholderUpdate();
 
-        Bukkit.getScheduler().runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
+        SchedulerUtil.runTaskAsynchronously(DeluxeMenus.getInstance(), getViewer(), () -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -162,7 +155,7 @@ public class MenuHolder implements InventoryHolder {
                 Menu.closeMenu(getViewer(), true);
             }
 
-            Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
+            SchedulerUtil.runTask(DeluxeMenus.getInstance(), getViewer(), () -> {
 
                 boolean update = false;
 
@@ -210,73 +203,66 @@ public class MenuHolder implements InventoryHolder {
             stopPlaceholderUpdate();
         }
 
-        updateTask = new BukkitRunnable() {
-
-            @Override
-            public void run() {
-
-                if (updating) {
-                    return;
-                }
-
-                Set<MenuItem> items = getActiveItems();
-
-                if (items == null) {
-                    return;
-                }
-
-                for (MenuItem item : items) {
-
-                    if (item.options().updatePlaceholders()) {
-
-                        ItemStack i = inventory.getItem(item.options().slot());
-
-                        if (i == null) {
-                            continue;
-                        }
-
-                        int amt = i.getAmount();
-
-                        if (item.options().dynamicAmount().isPresent()) {
-                            try {
-                                amt = Integer.parseInt(setPlaceholdersAndArguments(item.options().dynamicAmount().get()));
-                                if (amt <= 0) {
-                                    amt = 1;
-                                }
-                            } catch (Exception exception) {
-                                DeluxeMenus.printStacktrace(
-                                        "Something went wrong while updating item in slot " + item.options().slot() +
-                                                ". Invalid dynamic amount: " + setPlaceholdersAndArguments(item.options().dynamicAmount().get()),
-                                        exception
-                                );
-                            }
-                        }
-
-                        ItemMeta meta = i.getItemMeta();
-
-                        if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
-                            meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
-                        }
-
-                        if (item.options().loreHasPlaceholders()) {
-
-                            List<String> updated = new ArrayList<>();
-
-                            for (String line : item.options().lore()) {
-                                updated.add(StringUtils
-                                        .color(setPlaceholdersAndArguments(line)));
-                            }
-                            meta.setLore(updated);
-                        }
-
-                        i.setItemMeta(meta);
-                        i.setAmount(amt);
-                    }
-                }
+        updateTask = SchedulerUtil.runTaskTimerAsynchronously(DeluxeMenus.getInstance(), getViewer(), () -> {
+            if (updating) {
+                return;
             }
 
-        }.runTaskTimerAsynchronously(DeluxeMenus.getInstance(), 20L,
-                20L * Menu.getMenu(menuName).getUpdateInterval());
+            Set<MenuItem> items = getActiveItems();
+
+            if (items == null) {
+                return;
+            }
+
+            for (MenuItem item : items) {
+
+                if (item.options().updatePlaceholders()) {
+
+                    ItemStack i = inventory.getItem(item.options().slot());
+
+                    if (i == null) {
+                        continue;
+                    }
+
+                    int amt = i.getAmount();
+
+                    if (item.options().dynamicAmount().isPresent()) {
+                        try {
+                            amt = Integer.parseInt(setPlaceholdersAndArguments(item.options().dynamicAmount().get()));
+                            if (amt <= 0) {
+                                amt = 1;
+                            }
+                        } catch (Exception exception) {
+                            DeluxeMenus.printStacktrace(
+                                    "Something went wrong while updating item in slot " + item.options().slot() +
+                                            ". Invalid dynamic amount: " + setPlaceholdersAndArguments(item.options().dynamicAmount().get()),
+                                    exception
+                            );
+                        }
+                    }
+
+                    ItemMeta meta = i.getItemMeta();
+
+                    if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
+                        meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
+                    }
+
+                    if (item.options().loreHasPlaceholders()) {
+
+                        List<String> updated = new ArrayList<>();
+
+                        for (String line : item.options().lore()) {
+                            updated.add(StringUtils
+                                    .color(setPlaceholdersAndArguments(line)));
+                        }
+                        meta.setLore(updated);
+                    }
+
+                    i.setItemMeta(meta);
+                    i.setAmount(amt);
+                }
+            }
+        }, 20L, 20L * Menu.getMenu(menuName).getUpdateInterval());
     }
 
     public boolean isUpdating() {

@@ -20,6 +20,7 @@ public final class VersionHelper {
 
     private static final String PACKAGE_NAME = Bukkit.getServer().getClass().getPackage().getName();
     public static final String NMS_VERSION = PACKAGE_NAME.substring(PACKAGE_NAME.lastIndexOf('.') + 1);
+    private static Boolean IS_FOLIA;
 
     // ArmorTrims
     private static final int V1_20 = 1200;
@@ -203,4 +204,7 @@ public final class VersionHelper {
         return Class.forName("org.bukkit.craftbukkit." + NMS_VERSION + "." + name);
     }
 
+    public static boolean isFolia() {
+        return IS_FOLIA == null ? IS_FOLIA = Bukkit.getVersion().toLowerCase().contains("folia") : IS_FOLIA;
+    }
 }

@@ -10,13 +10,13 @@ import com.extendedclip.deluxemenus.hooks.*;
 import com.extendedclip.deluxemenus.listener.PlayerListener;
 import com.extendedclip.deluxemenus.menu.HeadType;
 import com.extendedclip.deluxemenus.menu.Menu;
-import com.extendedclip.deluxemenus.metrics.Metrics;
 import com.extendedclip.deluxemenus.nbt.NbtProvider;
 import com.extendedclip.deluxemenus.persistentmeta.PersistentMetaHandler;
 import com.extendedclip.deluxemenus.placeholder.Expansion;
 import com.extendedclip.deluxemenus.updatechecker.UpdateChecker;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.Messages;
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
@@ -163,7 +163,7 @@ public class DeluxeMenus extends JavaPlugin {
   public void onDisable() {
     Bukkit.getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
 
-    Bukkit.getScheduler().cancelTasks(this);
+    SchedulerUtil.cancelTasks(this);
 
     if (this.adventure != null) {
       this.adventure.close();
@@ -172,7 +172,7 @@ public class DeluxeMenus extends JavaPlugin {
 
     Menu.unloadForShutdown();
 
-    itemHooks.clear();
+    if (itemHooks != null) itemHooks.clear();
 
     instance = null;
   }

@@ -11,10 +11,7 @@ import com.extendedclip.deluxemenus.hooks.ItemHook;
 import com.extendedclip.deluxemenus.menu.*;
 import com.extendedclip.deluxemenus.requirement.*;
 import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
-import com.extendedclip.deluxemenus.utils.DebugLevel;
-import com.extendedclip.deluxemenus.utils.InventoryUtil;
-import com.extendedclip.deluxemenus.utils.LocationUtils;
-import com.extendedclip.deluxemenus.utils.VersionHelper;
+import com.extendedclip.deluxemenus.utils.*;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.block.banner.PatternType;
@@ -1533,11 +1530,11 @@ public class DeluxeMenusConfig {
             );
 
             if (action.hasDelay()) {
-              actionTask.runTaskLater(plugin, action.getDelay(holder));
+              SchedulerUtil.runTaskLater(plugin, holder.getViewer(), actionTask, action.getDelay(holder));
               continue;
             }
 
-            actionTask.runTask(plugin);
+            SchedulerUtil.runTask(plugin, holder.getViewer(), actionTask);
           }
         }
       };

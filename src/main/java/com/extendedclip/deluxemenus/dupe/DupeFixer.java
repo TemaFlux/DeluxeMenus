@@ -2,6 +2,7 @@ package com.extendedclip.deluxemenus.dupe;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -30,9 +31,9 @@ public class DupeFixer implements Listener {
         }
 
         DeluxeMenus.debug(
-                DebugLevel.LOWEST,
-                Level.INFO,
-                "Someone picked up a DeluxeMenus item. Removing it."
+            DebugLevel.LOWEST,
+            Level.INFO,
+            "Someone picked up a DeluxeMenus item. Removing it."
         );
         event.getItem().remove();
     }
@@ -53,21 +54,18 @@ public class DupeFixer implements Listener {
 
     @EventHandler
     private void onLogin(@NotNull final PlayerLoginEvent event) {
-        plugin.getServer().getScheduler().runTaskLater(
-                plugin,
-                () -> {
-                    for (final ItemStack itemStack : event.getPlayer().getInventory().getContents()) {
-                        if (itemStack == null) continue;
-                        if (!marker.isMarked(itemStack)) continue;
+        SchedulerUtil.runTaskLater(plugin, event.getPlayer(), () -> {
+            for (final ItemStack itemStack : event.getPlayer().getInventory().getContents()) {
+                if (itemStack == null) continue;
+                if (!marker.isMarked(itemStack)) continue;
 
-                        DeluxeMenus.debug(
-                                DebugLevel.LOWEST,
-                                Level.INFO,
-                                "Player logged in with a DeluxeMenus item in their inventory. Removing it."
-                        );
-                        event.getPlayer().getInventory().remove(itemStack);
-                    }},
-                10L
+                DeluxeMenus.debug(
+                        DebugLevel.LOWEST,
+                        Level.INFO,
+                        "Player logged in with a DeluxeMenus item in their inventory. Removing it."
+                );
+                event.getPlayer().getInventory().remove(itemStack);
+            }}, 10L
         );
     }
 }

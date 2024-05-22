@@ -5,6 +5,7 @@ import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.dupe.MenuItemMarker;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.extendedclip.deluxemenus.utils.StringUtils;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -205,7 +206,7 @@ public class Menu extends Command {
     }
 
     if (close) {
-      Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
+      SchedulerUtil.runTask(DeluxeMenus.getInstance(), p, () -> {
         p.closeInventory();
         cleanInventory(p, DeluxeMenus.getInstance().getMenuItemMarker());
       });
@@ -389,7 +390,7 @@ public class Menu extends Command {
       return;
     }
 
-    Bukkit.getScheduler().runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
+    SchedulerUtil.runTaskAsynchronously(DeluxeMenus.getInstance(), viewer, () -> {
 
       Set<MenuItem> activeItems = new HashSet<>();
 
@@ -480,7 +481,7 @@ public class Menu extends Command {
 
       final boolean updatePlaceholders = update;
 
-      Bukkit.getScheduler().runTask(DeluxeMenus.getInstance(), () -> {
+      SchedulerUtil.runTask(DeluxeMenus.getInstance(), viewer, () -> {
         if (inMenu(holder.getViewer())) {
           closeMenu(holder.getViewer(), false);
         }

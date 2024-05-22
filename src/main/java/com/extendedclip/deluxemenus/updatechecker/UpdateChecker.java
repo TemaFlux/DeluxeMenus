@@ -3,12 +3,7 @@ package com.extendedclip.deluxemenus.updatechecker;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.Messages;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.logging.Level;
-import java.util.regex.Pattern;
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import net.kyori.adventure.text.TextReplacementConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -16,8 +11,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 public class UpdateChecker implements Listener {
 
@@ -34,21 +35,11 @@ public class UpdateChecker implements Listener {
   public UpdateChecker(final @NotNull DeluxeMenus instance) {
     plugin = instance;
 
-    new BukkitRunnable() {
-      @Override
-      public void run() {
-        if (check()) {
-          new BukkitRunnable() {
-
-            @Override
-            public void run() {
-              register();
-            }
-          }.runTask(plugin);
-        }
+    SchedulerUtil.runTaskAsynchronously(instance, null, () -> {
+      if (check()) {
+        SchedulerUtil.runTask(instance, null, this::register);
       }
-
-    }.runTaskAsynchronously(plugin);
+    });
   }
 
   private void register() {

@@ -7,6 +7,7 @@ import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.menu.MenuItem;
 import com.extendedclip.deluxemenus.requirement.Requirement;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
+import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
@@ -101,7 +102,7 @@ public class PlayerListener implements Listener {
 
     if (Menu.inMenu(player)) {
       Menu.closeMenu(player, false);
-      Bukkit.getScheduler().runTaskLater(plugin, () -> {
+      SchedulerUtil.runTaskLater(plugin, player, () -> {
         Menu.cleanInventory(player, plugin.getMenuItemMarker());
         player.updateInventory();
       }, 3L);
