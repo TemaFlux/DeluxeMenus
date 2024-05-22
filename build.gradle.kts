@@ -14,6 +14,7 @@ version = "$majorVersion-$minorVersion"
 
 repositories {
     mavenCentral()
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.glaremasters.me/repository/public/")
@@ -22,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(libs.spigot)
+    compileOnly(libs.paper)
 
     compileOnly(libs.vault)
     compileOnly(libs.authlib)
@@ -53,7 +54,7 @@ tasks {
     }
     java {
         sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     processResources {
