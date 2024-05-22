@@ -35,7 +35,7 @@ public class UpdateChecker implements Listener {
   public UpdateChecker(final @NotNull DeluxeMenus instance) {
     plugin = instance;
 
-    SchedulerUtil.runTaskAsynchronously(instance, null, () -> {
+    SchedulerUtil.runTaskAsynchronously(instance, () -> {
       if (check()) {
         SchedulerUtil.runTask(instance, null, this::register);
       }

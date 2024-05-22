@@ -117,7 +117,7 @@ public class MenuHolder implements InventoryHolder {
 
         stopPlaceholderUpdate();
 
-        SchedulerUtil.runTaskAsynchronously(DeluxeMenus.getInstance(), getViewer(), () -> {
+        SchedulerUtil.runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -203,7 +203,7 @@ public class MenuHolder implements InventoryHolder {
             stopPlaceholderUpdate();
         }
 
-        updateTask = SchedulerUtil.runTaskTimerAsynchronously(DeluxeMenus.getInstance(), getViewer(), () -> {
+        updateTask = SchedulerUtil.runTaskTimerAsynchronously(DeluxeMenus.getInstance(), () -> {
             if (updating) {
                 return;
             }

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class SchedulerUtil {
     private static Set<ScheduledTask> tasks;
@@ -65,14 +66,16 @@ public class SchedulerUtil {
         return handleTask == null ? null : new Task(handleTask);
     }
 
-    public static Task runTaskAsynchronously(Plugin plugin, Object handle, Runnable action) {
+    public static Task runTaskAsynchronously(Plugin plugin, Runnable action) {
         if (plugin == null || action == null) return null;
 
         Object handleTask;
 
         if (VersionHelper.isFolia()) {
-            if (handle == null) handleTask = CompletableFuture.runAsync(action);
-            else return runTask(plugin, handle, action);
+            ScheduledTask task = Bukkit.getAsyncScheduler().runNow(plugin, ignored -> action.run());
+
+            addTask(task);
+            handleTask = task;
         } else {
             handleTask = Bukkit.getScheduler().runTaskAsynchronously(plugin, action);
         }
@@ -80,44 +83,50 @@ public class SchedulerUtil {
         return new Task(handleTask);
     }
 
-    public static Task runTaskTimerAsynchronously(Plugin plugin, Object handle, Runnable action, long initialDelayTicks, long periodTicks) {
+    public static Task runTaskTimerAsynchronously(Plugin plugin, Runnable action, long initialDelayTicks, long periodTicks) {
         if (plugin == null || action == null) return null;
 
-        Object handleTask = null;
+        Object handleTask;
 
         if (VersionHelper.isFolia()) {
-            if (handle == null) {
-                handle = getAnyEntity();
-                if (handle == null) return null;
-            }
+            initialDelayTicks = (initialDelayTicks * 1000L) / 20;
+            periodTicks = (periodTicks * 1000L) / 20;
 
-            ScheduledTask task = null;
-            if (handle instanceof Entity) task = ((Entity) handle).getScheduler().runAtFixedRate(plugin, ignored -> action.run(), null, initialDelayTicks, periodTicks);
-            else if (handle instanceof Location) task = Bukkit.getRegionScheduler().runAtFixedRate(plugin, (Location) handle, ignored -> action.run(), initialDelayTicks, periodTicks);
+            ScheduledTask task = Bukkit.getAsyncScheduler().runAtFixedRate(plugin, ignored -> action.run(), initialDelayTicks, periodTicks, TimeUnit.MILLISECONDS);
 
             addTask(task);
-            if (task != null) handleTask = task;
+            handleTask = task;
         } else {
             handleTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, action, initialDelayTicks, periodTicks);
         }
 
-        return handleTask == null ? null : new Task(handleTask);
+        return new Task(handleTask);
     }
 
     public static void cancelTasks(Plugin plugin) {
         if (plugin == null) return;
 
         if (VersionHelper.isFolia()) {
-            if (tasks == null || tasks.isEmpty()) return;
+            try {
+                Bukkit.getAsyncScheduler().cancelTasks(plugin);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
 
-            tasks.removeIf(task -> {
-                if (Objects.equals(task.getOwningPlugin(), plugin)) {
-                    if (!task.isCancelled()) task.cancel();
-                    return true;
-                }
+            try {
+                if (tasks == null || tasks.isEmpty()) return;
 
-                return false;
-            });
+                tasks.removeIf(task -> {
+                    if (Objects.equals(task.getOwningPlugin(), plugin)) {
+                        if (!task.isCancelled()) task.cancel();
+                        return true;
+                    }
+
+                    return false;
+                });
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         } else {
             Bukkit.getScheduler().cancelTasks(plugin);
         }

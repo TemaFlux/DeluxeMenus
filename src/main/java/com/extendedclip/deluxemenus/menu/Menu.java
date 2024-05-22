@@ -390,7 +390,7 @@ public class Menu extends Command {
       return;
     }
 
-    SchedulerUtil.runTaskAsynchronously(DeluxeMenus.getInstance(), viewer, () -> {
+    SchedulerUtil.runTaskAsynchronously(DeluxeMenus.getInstance(), () -> {
 
       Set<MenuItem> activeItems = new HashSet<>();
 
