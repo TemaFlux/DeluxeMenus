@@ -157,13 +157,15 @@ public class SchedulerUtil {
         public void cancel() {
             if (handle == null) return;
 
-            if (handle instanceof ScheduledTask) {
-                ((ScheduledTask) handle).cancel();
-            } else if (handle instanceof BukkitTask) {
-                ((BukkitTask) handle).cancel();
-            } else if (handle instanceof CompletableFuture) {
-                ((CompletableFuture<?>) handle).cancel(true);
-            }
+            try {
+                if (VersionHelper.isFolia() && handle instanceof ScheduledTask) {
+                    ((ScheduledTask) handle).cancel();
+                } else if (handle instanceof BukkitTask) {
+                    ((BukkitTask) handle).cancel();
+                } else if (handle instanceof CompletableFuture) {
+                    ((CompletableFuture<?>) handle).cancel(true);
+                }
+            } catch (Throwable ignored) {}
         }
 
         public boolean isCancelled() {
