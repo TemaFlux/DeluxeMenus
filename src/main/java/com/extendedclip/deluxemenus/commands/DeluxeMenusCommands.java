@@ -1,20 +1,8 @@
 package com.extendedclip.deluxemenus.commands;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
-import com.extendedclip.deluxemenus.action.ActionType;
-import com.extendedclip.deluxemenus.action.ClickAction;
-import com.extendedclip.deluxemenus.action.ClickActionTask;
-import com.extendedclip.deluxemenus.config.DeluxeMenusConfig;
 import com.extendedclip.deluxemenus.menu.Menu;
-import com.extendedclip.deluxemenus.menu.MenuHolder;
-import com.extendedclip.deluxemenus.utils.DumpUtils;
 import com.extendedclip.deluxemenus.utils.Messages;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextReplacementConfig;
@@ -28,6 +16,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
 
@@ -77,131 +68,6 @@ public class DeluxeMenusCommands implements CommandExecutor {
       }
 
       plugin.sms(sender, Messages.HELP);
-      return true;
-
-    } else if (args[0].equalsIgnoreCase("dump")) {
-      if (!sender.hasPermission("deluxemenus.admin")) {
-        plugin.sms(sender, Messages.NO_PERMISSION);
-        return true;
-      }
-
-      if (args.length != 2) {
-        plugin.sms(sender, Messages.WRONG_USAGE_DUMP_COMMAND);
-        return true;
-      }
-
-      String dump = "";
-      try {
-        dump = DumpUtils.createDump(plugin, args[1]);
-      } catch (final RuntimeException ignored) {
-      }
-
-      if (dump.isBlank()) {
-        plugin.sms(sender, Messages.DUMP_FAILED);
-        return true;
-      }
-
-      DumpUtils.postDump(dump).whenComplete((result, error) -> {
-        if (error != null) {
-          DeluxeMenus.printStacktrace(
-              "Something went wrong while trying to create and post a dump!",
-              error
-          );
-          plugin.sms(sender, Messages.DUMP_FAILED);
-          return;
-        }
-
-        final var link = text(DumpUtils.URL + result)
-            .clickEvent(ClickEvent.openUrl(DumpUtils.URL + result));
-
-        plugin.sms(sender, Messages.DUMP_SUCCESS.message().append(link));
-      });
-
-      return true;
-    } else if (args[0].equalsIgnoreCase("execute")) {
-      if (!sender.isOp()) {
-        plugin.sms(sender, Messages.NO_PERMISSION);
-        return true;
-      }
-
-      if (args.length < 3) {
-        plugin.sms(sender, Messages.WRONG_USAGE_EXECUTE_COMMAND);
-        return true;
-      }
-
-      Player target = Bukkit.getPlayer(args[1]);
-      if (target == null) {
-        plugin.sms(
-            sender,
-            Messages.PLAYER_IS_NOT_ONLINE.message().replaceText(PLAYER_REPLACER_BUILDER.replacement(args[1]).build())
-        );
-        return true;
-      }
-
-      String executable = String.join(" ", Arrays.asList(args).subList(2, args.length));
-
-      ActionType type = ActionType.getByStart(executable);
-
-      if (type == null) {
-        plugin.sms(sender, Messages.WRONG_ACTION_TYPE);
-        return true;
-      }
-
-      executable = executable.replaceFirst(Pattern.quote(type.getIdentifier()), "").trim();
-
-      ClickAction action = new ClickAction(type, executable);
-
-      Matcher d = DeluxeMenusConfig.DELAY_MATCHER.matcher(executable);
-
-      if (d.find()) {
-        action.setDelay(d.group(1));
-        executable = executable.replaceFirst(Pattern.quote(d.group()), "");
-      }
-
-      Matcher ch = DeluxeMenusConfig.CHANCE_MATCHER.matcher(executable);
-
-      if (ch.find()) {
-        action.setChance(ch.group(1));
-        executable = executable.replaceFirst(Pattern.quote(ch.group()), "");
-      }
-
-      action.setExecutable(executable);
-
-      MenuHolder holder =
-          Menu.getMenuHolder(target) == null ? new MenuHolder(target) : Menu.getMenuHolder(target);
-
-      if (!action.checkChance(holder)) {
-        plugin.sms(sender, Messages.CHANCE_FAIL);
-        return true;
-      }
-
-      final ClickActionTask actionTask = new ClickActionTask(
-              plugin,
-              target.getUniqueId(),
-              action.getType(),
-              action.getExecutable(),
-              holder.getTypedArgs(),
-              true
-      );
-
-      if (action.hasDelay()) {
-        SchedulerUtil.runTaskLater(plugin, target, actionTask, action.getDelay(holder));
-
-        plugin.sms(
-            sender,
-            Messages.ACTION_TO_BE_EXECUTED.message().replaceText(
-                AMOUNT_REPLACER_BUILDER.replacement(String.valueOf(action.getDelay(holder))).build())
-        );
-        return true;
-      }
-
-      SchedulerUtil.runTask(plugin, target, actionTask);
-
-      plugin.sms(
-          sender,
-          Messages.ACTION_EXECUTED_FOR.message().replaceText(
-              PLAYER_REPLACER_BUILDER.replacement(target.getName()).build())
-      );
       return true;
 
     } else if (args[0].equalsIgnoreCase("reload")) {
