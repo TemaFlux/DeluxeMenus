@@ -171,7 +171,7 @@ public class SchedulerUtil {
         public boolean isCancelled() {
             if (handle == null) return false;
 
-            if (handle instanceof ScheduledTask) {
+            if (VersionHelper.isFolia() && handle instanceof ScheduledTask) {
                 return ((ScheduledTask) handle).isCancelled();
             } else if (handle instanceof BukkitTask) {
                 return ((BukkitTask) handle).isCancelled();
