@@ -49,14 +49,16 @@ public class PlayerListener implements Listener {
   @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
   public void onCommandExecute(PlayerCommandPreprocessEvent event) {
 
-    String cmd = event.getMessage().substring(1);
-    Menu menu = Menu.getMenuByCommand(cmd.toLowerCase());
+    final String cmd = event.getMessage().substring(1);
+    final Optional<Menu> optionalMenu = Menu.getMenuByCommand(cmd.toLowerCase());
 
-    if (menu == null) {
+    if (optionalMenu.isEmpty()) {
       return;
     }
 
-    if (menu.registersCommand()) {
+    final Menu menu = optionalMenu.get();
+
+    if (menu.options().registerCommands()) {
       return;
     }
 
@@ -69,7 +71,7 @@ public class PlayerListener implements Listener {
   public void onLeave(PlayerQuitEvent event) {
     Player player = event.getPlayer();
 
-    if (Menu.inMenu(player)) {
+    if (Menu.isInMenu(player)) {
       Menu.closeMenu(player, false);
     }
   }
@@ -86,7 +88,7 @@ public class PlayerListener implements Listener {
       event.setCancelled(true);
     }
 
-    if (Menu.inMenu(player)) {
+    if (Menu.isInMenu(player)) {
       Menu.closeMenu(player, true);
     }
   }
@@ -100,7 +102,7 @@ public class PlayerListener implements Listener {
 
     final Player player = (Player) event.getPlayer();
 
-    if (Menu.inMenu(player)) {
+    if (Menu.isInMenu(player)) {
       Menu.closeMenu(player, false);
       SchedulerUtil.runTaskLater(plugin, player, () -> {
         Menu.cleanInventory(player, plugin.getMenuItemMarker());
@@ -117,14 +119,15 @@ public class PlayerListener implements Listener {
     }
 
     final Player player = (Player) event.getWhoClicked();
-
-    MenuHolder holder = Menu.getMenuHolder(player);
+    final Optional<MenuHolder> optionalHolder = Menu.getMenuHolder(player);
+    final MenuHolder holder = optionalHolder.orElse(null);
 
     if (holder == null) {
       return;
     }
 
-    if (holder.getMenu() == null) {
+
+    if (holder.getMenu().isEmpty()) {
       Menu.closeMenu(player, true);
     }
 

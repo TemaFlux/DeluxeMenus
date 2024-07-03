@@ -3,6 +3,8 @@ package com.extendedclip.deluxemenus.menu;
 import com.cryptomorin.xseries.XMaterial;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.hooks.ItemHook;
+import com.extendedclip.deluxemenus.menu.options.HeadType;
+import com.extendedclip.deluxemenus.menu.options.MenuItemOptions;
 import com.extendedclip.deluxemenus.nbt.NbtProvider;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
@@ -267,7 +269,7 @@ public class MenuItem {
             itemMeta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
         }
 
-        if (ItemUtils.hasArmorMeta(itemStack)) {
+        if (VersionHelper.HAS_ARMOR_TRIMS && ItemUtils.hasArmorMeta(itemStack)) {
             final Optional<String> trimMaterialName = this.options.trimMaterial();
             final Optional<String> trimPatternName = this.options.trimPattern();
 

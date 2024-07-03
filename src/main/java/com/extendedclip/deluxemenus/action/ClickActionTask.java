@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,6 +25,7 @@ public class ClickActionTask implements Runnable {
     // Ugly hack to get around the fact that arguments are not available at task execution time
     private final Map<String, String> arguments;
     private final boolean parsePlaceholdersInArguments;
+    private final boolean parsePlaceholdersAfterArguments;
 
     public ClickActionTask(
             @NotNull final DeluxeMenus plugin,
@@ -31,7 +33,8 @@ public class ClickActionTask implements Runnable {
             @NotNull final ActionType actionType,
             @NotNull final String exec,
             @NotNull final Map<String, String> arguments,
-            final boolean parsePlaceholdersInArguments
+            final boolean parsePlaceholdersInArguments,
+            final boolean parsePlaceholdersAfterArguments
     ) {
         this.plugin = plugin;
         this.uuid = uuid;
@@ -39,6 +42,7 @@ public class ClickActionTask implements Runnable {
         this.exec = exec;
         this.arguments = arguments;
         this.parsePlaceholdersInArguments = parsePlaceholdersInArguments;
+        this.parsePlaceholdersAfterArguments = parsePlaceholdersAfterArguments;
     }
 
     @Override
@@ -48,9 +52,18 @@ public class ClickActionTask implements Runnable {
             return;
         }
 
-        final MenuHolder holder = Menu.getMenuHolder(player);
-        final String executable = StringUtils.replacePlaceholdersAndArguments(this.exec, this.arguments, player, this.parsePlaceholdersInArguments);
+        final Optional<MenuHolder> holder = Menu.getMenuHolder(player);
+        final Player target = holder.isPresent() && holder.get().getPlaceholderPlayer() != null
+                ? holder.get().getPlaceholderPlayer()
+                : player;
 
+
+        final String executable = StringUtils.replacePlaceholdersAndArguments(
+                this.exec,
+                this.arguments,
+                target,
+                this.parsePlaceholdersInArguments,
+                this.parsePlaceholdersAfterArguments);
 
         switch (actionType) {
             case META:
@@ -78,7 +91,7 @@ public class ClickActionTask implements Runnable {
                 break;
 
             case PLACEHOLDER:
-                holder.setPlaceholders(executable);
+                holder.ifPresent(it -> it.setPlaceholders(executable));
                 break;
 
             case CHAT:
@@ -121,21 +134,23 @@ public class ClickActionTask implements Runnable {
 
                 final String menuName = executableParts[0];
 
-                final Menu menuToOpen = Menu.getMenu(menuName);
+                final Optional<Menu> optionalMenuToOpen = Menu.getMenuByName(menuName);
 
-                if (menuToOpen == null) {
-                    DeluxeMenus.debug(DebugLevel.HIGHEST, Level.WARNING, "Could not find and open menu " + menuName);
+                if (optionalMenuToOpen.isEmpty()) {
+                    DeluxeMenus.debug(DebugLevel.HIGHEST, Level.WARNING, "Could not find and open menu " + executable);
                     break;
                 }
 
-                final List<String> menuArgumentNames = menuToOpen.getArgs();
+                final Menu menuToOpen = optionalMenuToOpen.get();
+
+                final List<String> menuArgumentNames = menuToOpen.options().arguments();
 
                 String[] passedArgumentValues = null;
                 if (executableParts.length > 1) {
                     passedArgumentValues = executableParts[1].split(" ");
                 }
 
-                if (menuArgumentNames == null || menuArgumentNames.isEmpty()) {
+                if (menuArgumentNames.isEmpty()) {
                     if (passedArgumentValues != null && passedArgumentValues.length > 0) {
                         DeluxeMenus.debug(
                                 DebugLevel.HIGHEST,
@@ -144,23 +159,23 @@ public class ClickActionTask implements Runnable {
                         );
                     }
 
-                    if (holder == null) {
+                    if (holder.isEmpty()) {
                         menuToOpen.openMenu(player);
                         break;
                     }
 
-                    menuToOpen.openMenu(player, holder.getTypedArgs(), holder.getPlaceholderPlayer());
+                    menuToOpen.openMenu(player, holder.get().getTypedArgs(), holder.get().getPlaceholderPlayer());
                     break;
                 }
 
                 if (passedArgumentValues == null || passedArgumentValues.length == 0) {
                     // Replicate old behavior: If no arguments are given, open the menu with the arguments from the current menu
-                    if (holder == null) {
+                    if (holder.isEmpty()) {
                         menuToOpen.openMenu(player);
                         break;
                     }
 
-                    menuToOpen.openMenu(player, holder.getTypedArgs(), holder.getPlaceholderPlayer());
+                    menuToOpen.openMenu(player, holder.get().getTypedArgs(), holder.get().getPlaceholderPlayer());
                     break;
                 }
 
@@ -174,10 +189,10 @@ public class ClickActionTask implements Runnable {
                 }
 
                 final Map<String, String> argumentsMap = new HashMap<>();
-                if (holder != null && holder.getTypedArgs() != null) {
+                if (holder.isPresent() && holder.get().getTypedArgs() != null) {
                     // Pass the arguments from the current menu to the new menu. If the new menu has arguments with the
                     // same name, they will be overwritten
-                    argumentsMap.putAll(holder.getTypedArgs());
+                    argumentsMap.putAll(holder.get().getTypedArgs());
                 }
 
                 for (int index = 0; index < menuArgumentNames.size(); index++) {
@@ -203,12 +218,12 @@ public class ClickActionTask implements Runnable {
                     argumentsMap.put(argumentName, passedArgumentValues[index]);
                 }
 
-                if (holder == null) {
+                if (holder.isEmpty()) {
                     menuToOpen.openMenu(player, argumentsMap, null);
                     break;
                 }
 
-                menuToOpen.openMenu(player, argumentsMap, holder.getPlaceholderPlayer());
+                menuToOpen.openMenu(player, argumentsMap, holder.get().getPlaceholderPlayer());
                 break;
 
             case CONNECT:
@@ -225,7 +240,7 @@ public class ClickActionTask implements Runnable {
                 break;
 
             case REFRESH:
-                if (holder == null) {
+                if (holder.isEmpty()) {
                     DeluxeMenus.debug(
                             DebugLevel.MEDIUM,
                             Level.WARNING,
@@ -234,7 +249,7 @@ public class ClickActionTask implements Runnable {
                     break;
                 }
 
-                holder.refreshMenu();
+                holder.get().refreshMenu();
                 break;
 
             case TAKE_MONEY:
@@ -394,14 +409,14 @@ public class ClickActionTask implements Runnable {
 
                 switch (actionType) {
                     case BROADCAST_SOUND:
-                        for (final Player target : Bukkit.getOnlinePlayers()) {
-                            target.playSound(target.getLocation(), sound, volume, pitch);
+                        for (final Player broadcastTarget : Bukkit.getOnlinePlayers()) {
+                            broadcastTarget.playSound(broadcastTarget.getLocation(), sound, volume, pitch);
                         }
                         break;
 
                     case BROADCAST_WORLD_SOUND:
-                        for (final Player target : player.getWorld().getPlayers()) {
-                            target.playSound(target.getLocation(), sound, volume, pitch);
+                        for (final Player broadcastTarget : player.getWorld().getPlayers()) {
+                            broadcastTarget.playSound(broadcastTarget.getLocation(), sound, volume, pitch);
                         }
                         break;
 
@@ -414,5 +429,13 @@ public class ClickActionTask implements Runnable {
             default:
                 break;
         }
+    }
+
+    public void runTaskLater(Plugin plugin, Object handle, long delayTicks) {
+        SchedulerUtil.runTaskLater(plugin, handle, this, delayTicks);
+    }
+
+    public void runTask(Plugin plugin, Object handle) {
+        SchedulerUtil.runTask(plugin, handle, this);
     }
 }
