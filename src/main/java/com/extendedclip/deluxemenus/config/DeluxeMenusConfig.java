@@ -339,7 +339,13 @@ public class DeluxeMenusConfig {
 
     public boolean loadMenuFromFile(String menuName) {
 
-        String fileName = plugin.getConfig().getString("gui_menus." + menuName + ".file", menuName);
+        String fileName = plugin.getConfig().getString("gui_menus." + menuName + ".file");
+        if (!plugin.getConfig().contains("gui_menus." + menuName + ".file", true)) {
+            if (menuName.startsWith("/")) menuName = menuName.replaceFirst("/", "");
+            fileName = menuName;
+            menuName = menuName.replace(".yml", "");
+        }
+
         if (fileName == null) return false;
 
         if (!fileName.endsWith(".yml")) {
