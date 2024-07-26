@@ -159,12 +159,12 @@ public class DeluxeMenusConfig {
         c.addDefault("check_updates", true);
         c.options().copyDefaults(true);
 
-        if (!c.contains("gui_menus")) {
+        /* if (!c.contains("gui_menus")) {
             createMenuExamples(c);
-        } else {
+        } else { */
             plugin.saveConfig();
             plugin.reloadConfig();
-        }
+        // }
 
         return true;
     }
@@ -318,7 +318,7 @@ public class DeluxeMenusConfig {
 
         if (keys == null || keys.isEmpty()) {
             if (menuDirectory.exists() && menuDirectory.isDirectory()) try (Stream<Path> stream = Files.walk(menuDirectory.toPath())) {
-                stream.filter(Files::isRegularFile).forEach(file -> loadMenuFromFile(file.toFile().getPath()));
+                stream.filter(Files::isRegularFile).forEach(file -> loadMenuFromFile(file.toFile().getPath().replaceFirst(menuDirectory.toPath().toString(), "")));
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -339,7 +339,8 @@ public class DeluxeMenusConfig {
 
     public boolean loadMenuFromFile(String menuName) {
 
-        String fileName = plugin.getConfig().getString("gui_menus." + menuName + ".file");
+        String fileName = plugin.getConfig().getString("gui_menus." + menuName + ".file", menuName);
+        if (fileName == null) return false;
 
         if (!fileName.endsWith(".yml")) {
             DeluxeMenus.debug(
