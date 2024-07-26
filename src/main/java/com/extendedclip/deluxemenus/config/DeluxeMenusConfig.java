@@ -20,22 +20,11 @@ import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.InventoryUtil;
 import com.extendedclip.deluxemenus.utils.LocationUtils;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import com.google.common.base.Enums;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.banner.PatternType;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -46,20 +35,17 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.extendedclip.deluxemenus.utils.Constants.PLACEHOLDER_PREFIX;
-import static com.extendedclip.deluxemenus.utils.Constants.PLAYER_ITEMS;
-import static com.extendedclip.deluxemenus.utils.Constants.WATER_BOTTLE;
+import static com.extendedclip.deluxemenus.utils.Constants.*;
 
 public class DeluxeMenusConfig {
 
@@ -299,18 +285,10 @@ public class DeluxeMenusConfig {
         }
 
         FileConfiguration c = plugin.getConfig();
+        ConfigurationSection guiMenus = c.contains("gui_menus") && c.isConfigurationSection("gui_menus") ? c.getConfigurationSection("gui_menus") : null;
+        Set<String> keys = guiMenus == null ? null : guiMenus.getKeys(false);
 
-        if (!c.contains("gui_menus")) {
-            return false;
-        }
-
-        if (!c.isConfigurationSection("gui_menus")) {
-            return false;
-        }
-
-        Set<String> keys = c.getConfigurationSection("gui_menus").getKeys(false);
-
-        if (keys.isEmpty()) {
+        if (keys == null || keys.isEmpty()) {
             return false;
         }
 
@@ -334,31 +312,27 @@ public class DeluxeMenusConfig {
         }
 
         FileConfiguration c = plugin.getConfig();
+        ConfigurationSection guiMenus = c.contains("gui_menus") && c.isConfigurationSection("gui_menus") ? c.getConfigurationSection("gui_menus") : null;
+        Set<String> keys = guiMenus == null ? null : guiMenus.getKeys(false);
 
-        if (!c.contains("gui_menus")) {
-            return 0;
-        }
+        if (keys == null || keys.isEmpty()) {
+            if (menuDirectory.exists() && menuDirectory.isDirectory()) try (Stream<Path> stream = Files.walk(menuDirectory.toPath())) {
+                stream.filter(Files::isRegularFile).forEach(file -> loadMenuFromFile(file.toFile().getPath()));
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
 
-        if (!c.isConfigurationSection("gui_menus")) {
-            return 0;
-        }
-
-        Set<String> keys = c.getConfigurationSection("gui_menus").getKeys(false);
-
-        if (keys.isEmpty()) {
-            return 0;
+            return Menu.getLoadedMenuSize();
         }
 
         for (String key : keys) {
-
             if (c.contains("gui_menus." + key + ".file")) {
-
                 loadMenuFromFile(key);
-
             } else {
                 loadMenu(c, key, true);
             }
         }
+
         return Menu.getLoadedMenuSize();
     }
 
