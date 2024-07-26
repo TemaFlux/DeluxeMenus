@@ -1,4 +1,5 @@
 .gradle
 .idea
 build
-/run
+run/
+test-server/

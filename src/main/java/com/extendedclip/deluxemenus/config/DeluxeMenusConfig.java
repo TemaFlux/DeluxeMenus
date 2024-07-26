@@ -39,6 +39,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -712,6 +713,8 @@ public class DeluxeMenusConfig {
                 continue;
             }
 
+            checkForDeprecatedItemOptions(c.getConfigurationSection(currentPath), name);
+
             MenuItemOptions.MenuItemOptionsBuilder builder = MenuItemOptions.builder()
                     .material(material)
                     .baseColor(Optional.ofNullable(c.getString(currentPath + "base_color"))
@@ -1118,13 +1121,14 @@ public class DeluxeMenusConfig {
                 continue;
             }
 
-            RequirementType type = RequirementType.getType(c.getString(rPath + ".type"));
+            String stringType = c.getString(rPath + ".type");
+            RequirementType type = RequirementType.getType(stringType);
 
             if (type == null) {
                 DeluxeMenus.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
-                        "Requirement type at path: " + rPath + " is not a valid requirement type!"
+                        "Requirement type '" + stringType + "' at path '" + rPath + "' is not valid!"
                 );
                 continue;
             }
@@ -1531,6 +1535,27 @@ public class DeluxeMenusConfig {
         }
 
         return handler;
+    }
+
+    private void checkForDeprecatedItemOptions(ConfigurationSection config, String menuName) {
+        final BiConsumer<String, ItemFlag> oldItemFlagOptionCheck = (option, itemFlag) -> {
+            if (!config.contains(option)) {
+                return;
+            }
+
+            DeluxeMenus.debug(
+                DebugLevel.HIGHEST,
+                Level.WARNING,
+                String.format(
+                    "Option '%s' of item '%s' in menu '%s' is deprecated and will be removed in the future. Replace it with item_flags: [%s].",
+                    option, config.getName(), menuName, itemFlag
+                )
+            );
+        };
+
+        oldItemFlagOptionCheck.accept("hide_attributes", ItemFlag.HIDE_ATTRIBUTES);
+        oldItemFlagOptionCheck.accept("hide_enchantments", ItemFlag.HIDE_ENCHANTS);
+        oldItemFlagOptionCheck.accept("hide_unbreakable", ItemFlag.HIDE_UNBREAKABLE);
     }
 
     public void debug(String... messages) {

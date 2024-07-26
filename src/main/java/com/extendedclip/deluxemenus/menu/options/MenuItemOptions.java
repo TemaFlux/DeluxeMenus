@@ -12,10 +12,7 @@ import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class MenuItemOptions {
 
@@ -38,13 +35,9 @@ public class MenuItemOptions {
     private final Map<Enchantment, Integer> enchantments;
     private final List<PotionEffect> potionEffects;
     private final List<Pattern> bannerMeta;
-    private final List<ItemFlag> itemFlags;
+    private final Set<ItemFlag> itemFlags = new HashSet<>();
 
     private final boolean unbreakable;
-    private final boolean hideAttributes;
-    private final boolean hideEnchants;
-    private final boolean hidePotionEffects;
-    private final boolean hideUnbreakable;
 
     private final boolean displayNameHasPlaceholders;
     private final boolean loreHasPlaceholders;
@@ -97,12 +90,8 @@ public class MenuItemOptions {
         this.enchantments = builder.enchantments;
         this.potionEffects = builder.potionEffects;
         this.bannerMeta = builder.bannerMeta;
-        this.itemFlags = builder.itemFlags;
+        this.itemFlags.addAll(builder.itemFlags);
         this.unbreakable = builder.unbreakable;
-        this.hideAttributes = builder.hideAttributes;
-        this.hideEnchants = builder.hideEnchants;
-        this.hidePotionEffects = builder.hidePotionEffects;
-        this.hideUnbreakable = builder.hideUnbreakable;
         this.displayNameHasPlaceholders = builder.displayNameHasPlaceholders;
         this.loreHasPlaceholders = builder.loreHasPlaceholders;
         this.nbtString = builder.nbtString;
@@ -204,28 +193,12 @@ public class MenuItemOptions {
         return bannerMeta;
     }
 
-    public @NotNull List<ItemFlag> itemFlags() {
+    public @NotNull Set<ItemFlag> itemFlags() {
         return itemFlags;
     }
 
     public boolean unbreakable() {
         return unbreakable;
-    }
-
-    public boolean hideAttributes() {
-        return hideAttributes;
-    }
-
-    public boolean hideEnchants() {
-        return hideEnchants;
-    }
-
-    public boolean hidePotionEffects() {
-        return hidePotionEffects;
-    }
-
-    public boolean hideUnbreakable() {
-        return hideUnbreakable;
     }
 
     public boolean displayNameHasPlaceholders() {
@@ -351,10 +324,6 @@ public class MenuItemOptions {
                 .bannerMeta(this.bannerMeta)
                 .itemFlags(this.itemFlags)
                 .unbreakable(this.unbreakable)
-                .hideAttributes(this.hideAttributes)
-                .hideEnchants(this.hideEnchants)
-                .hidePotionEffects(this.hidePotionEffects)
-                .hideUnbreakable(this.hideUnbreakable)
                 .nbtString(this.nbtString)
                 .nbtInt(this.nbtInt)
                 .nbtStrings(this.nbtStrings)
@@ -399,13 +368,9 @@ public class MenuItemOptions {
         private Map<Enchantment, Integer> enchantments = Collections.emptyMap();
         private List<PotionEffect> potionEffects = Collections.emptyList();
         private List<Pattern> bannerMeta = Collections.emptyList();
-        private List<ItemFlag> itemFlags = Collections.emptyList();
+        private final Set<ItemFlag> itemFlags = new HashSet<>();
 
         private boolean unbreakable;
-        private boolean hideAttributes;
-        private boolean hideEnchants;
-        private boolean hidePotionEffects;
-        private boolean hideUnbreakable;
 
         private boolean displayNameHasPlaceholders;
         private boolean loreHasPlaceholders;
@@ -530,8 +495,8 @@ public class MenuItemOptions {
             return this;
         }
 
-        public MenuItemOptionsBuilder itemFlags(final @NotNull List<ItemFlag> itemFlags) {
-            this.itemFlags = itemFlags;
+        public MenuItemOptionsBuilder itemFlags(final @NotNull Collection<ItemFlag> itemFlags) {
+            this.itemFlags.addAll(itemFlags);
             return this;
         }
 
@@ -540,23 +505,51 @@ public class MenuItemOptions {
             return this;
         }
 
+        /**
+         * @deprecated Use {@link #itemFlags(Collection)} with {@link ItemFlag#HIDE_ATTRIBUTES}
+         */
+        @Deprecated()
         public MenuItemOptionsBuilder hideAttributes(final boolean hideAttributes) {
-            this.hideAttributes = hideAttributes;
+            if (hideAttributes) {
+                this.itemFlags.add(ItemFlag.HIDE_ATTRIBUTES);
+            }
             return this;
         }
 
+        /**
+         * @deprecated Use {@link #itemFlags(Collection)} with {@link ItemFlag#HIDE_ENCHANTS}
+         */
+        @Deprecated
         public MenuItemOptionsBuilder hideEnchants(final boolean hideEnchants) {
-            this.hideEnchants = hideEnchants;
+            if (hideEnchants) {
+                this.itemFlags.add(ItemFlag.HIDE_ENCHANTS);
+            }
             return this;
         }
 
+        /**
+         * @deprecated Use {@link #itemFlags(Collection)} with {@link ItemFlag#HIDE_UNBREAKABLE}
+         */
+        @Deprecated
         public MenuItemOptionsBuilder hidePotionEffects(final boolean hidePotionEffects) {
-            this.hidePotionEffects = hidePotionEffects;
+            if (hidePotionEffects) {
+                try {
+                    this.itemFlags.add(ItemFlag.HIDE_POTION_EFFECTS);
+                } catch (Throwable ignored) {
+                    this.itemFlags.add(ItemFlag.valueOf("HIDE_ITEM_SPECIFICS"));
+                }
+            }
             return this;
         }
 
+        /**
+         * @deprecated Use {@link #itemFlags(Collection)} with {@link ItemFlag#HIDE_UNBREAKABLE}
+         */
+        @Deprecated
         public MenuItemOptionsBuilder hideUnbreakable(final boolean hideUnbreakable) {
-            this.hideUnbreakable = hideUnbreakable;
+            if (hideUnbreakable) {
+                this.itemFlags.add(ItemFlag.HIDE_UNBREAKABLE);
+            }
             return this;
         }
 
