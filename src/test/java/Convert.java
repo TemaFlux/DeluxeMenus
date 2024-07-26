@@ -69,7 +69,7 @@ public class Convert {
             rows = configuration.getStringList("pattern").size();
         } else {
             int size = configuration.getInt("size");
-            rows = size / 9;
+            rows = Math.round(size / 9f);
         }
 
         Map<String, ConfigurationSection> items = new LinkedHashMap<>();
@@ -80,7 +80,7 @@ public class Convert {
                 ConfigurationSection section = itemsSection.getConfigurationSection(id);
                 if (section == null) continue;
 
-                if (hasPattern) {
+                if (!hasPattern) {
                     String key = CHARS[items.size()];
                     List<Integer> slots = new ArrayList<>();
 
