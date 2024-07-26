@@ -42,6 +42,8 @@ dependencies {
     implementation(libs.xseries) { isTransitive = false }
 
     compileOnly("org.jetbrains:annotations:23.0.0")
+
+    testImplementation(files("../BukkitConfiguration/build/libs/BukkitConfiguration-1.0-SNAPSHOT.jar"))
 }
 
 tasks {
