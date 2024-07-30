@@ -318,7 +318,11 @@ public class DeluxeMenusConfig {
 
         if (keys == null || keys.isEmpty()) {
             if (menuDirectory.exists() && menuDirectory.isDirectory()) try (Stream<Path> stream = Files.walk(menuDirectory.toPath())) {
-                stream.filter(Files::isRegularFile).forEach(file -> loadMenuFromFile(file.toFile().getPath().replaceFirst(menuDirectory.toPath().toString(), "")));
+                String path = menuDirectory.toPath().toString().replace("\\", "/"); // windows fix...
+                stream.filter(Files::isRegularFile).forEach(file -> loadMenuFromFile(file.toFile().getPath()
+                    .replace("\\", "/") // windows fix...
+                    .replaceFirst(path, ""))
+                );
             } catch (Throwable e) {
                 e.printStackTrace();
             }
