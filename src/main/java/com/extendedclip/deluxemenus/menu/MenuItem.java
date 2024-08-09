@@ -10,6 +10,7 @@ import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
 import com.extendedclip.deluxemenus.utils.StringUtils;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
+import com.google.common.collect.ImmutableMultimap;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -52,7 +53,7 @@ public class MenuItem {
         String stringMaterial = this.options.material();
         String lowercaseStringMaterial = stringMaterial.toLowerCase(Locale.ROOT);
 
-        if (ItemUtils.isPlaceholderMaterial(lowercaseStringMaterial)) {
+        if (ItemUtils.isPlaceholderOption(lowercaseStringMaterial)) {
             stringMaterial = holder.setPlaceholdersAndArguments(stringMaterial.substring(PLACEHOLDER_PREFIX.length()));
             lowercaseStringMaterial = stringMaterial.toLowerCase(Locale.ENGLISH);
         }
@@ -163,22 +164,23 @@ public class MenuItem {
             return itemStack;
         }
 
-        short data = this.options.data();
-
-        if (this.options.placeholderData().isPresent()) {
-            final String parsedData = holder.setPlaceholdersAndArguments(this.options.placeholderData().get());
+        if (this.options.damage().isPresent()) {
+            final String parsedDamage = holder.setPlaceholdersAndArguments(this.options.damage().get());
             try {
-                data = Short.parseShort(parsedData);
+                int damage = Integer.parseInt(parsedDamage);
+                if (damage > 0) {
+                    final ItemMeta meta = itemStack.getItemMeta();
+                    if (meta instanceof Damageable) {
+                        ((Damageable) meta).setDamage(damage);
+                        itemStack.setItemMeta(meta);
+                    }
+                }
             } catch (final NumberFormatException exception) {
                 DeluxeMenus.printStacktrace(
-                        "Invalid placeholder data found: " + parsedData + ".",
+                        "Invalid damage found: " + parsedDamage + ".",
                         exception
                 );
             }
-        }
-
-        if (data > 0) {
-            itemStack.setDurability(data);
         }
 
         if (this.options.amount() != -1) {
@@ -385,7 +387,7 @@ public class MenuItem {
                 itemMeta.addItemFlags(flag);
 
                 if (flag == ItemFlag.HIDE_ATTRIBUTES && VersionHelper.HAS_DATA_COMPONENTS) {
-                    itemMeta.setAttributeModifiers(null);
+                    itemMeta.setAttributeModifiers(ImmutableMultimap.of());
                 }
             }
         }

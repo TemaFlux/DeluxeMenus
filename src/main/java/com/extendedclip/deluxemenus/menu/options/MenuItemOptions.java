@@ -17,7 +17,7 @@ import java.util.*;
 public class MenuItemOptions {
 
     private final String material;
-    private final short data;
+    private final String damage;
     private final int amount;
     private final String customModelData;
     private final String dynamicAmount;
@@ -72,7 +72,7 @@ public class MenuItemOptions {
 
     private MenuItemOptions(final @NotNull MenuItemOptionsBuilder builder) {
         this.material = builder.material;
-        this.data = builder.data;
+        this.damage = builder.damage;
         this.amount = builder.amount;
         this.customModelData = builder.customModelData;
         this.dynamicAmount = builder.dynamicAmount;
@@ -125,8 +125,8 @@ public class MenuItemOptions {
         return material;
     }
 
-    public short data() {
-        return data;
+    public @NotNull Optional<String> damage() {
+        return Optional.ofNullable(damage);
     }
 
     public int amount() {
@@ -304,7 +304,7 @@ public class MenuItemOptions {
     public @NotNull MenuItemOptionsBuilder asBuilder() {
         return MenuItemOptions.builder()
                 .material(this.material)
-                .data(this.data)
+                .damage(this.damage)
                 .amount(this.amount)
                 .customModelData(this.customModelData)
                 .dynamicAmount(this.dynamicAmount)
@@ -350,7 +350,7 @@ public class MenuItemOptions {
     public static class MenuItemOptionsBuilder {
 
         private String material;
-        private short data;
+        private String damage;
         private int amount;
         private String customModelData;
         private String dynamicAmount;
@@ -411,8 +411,8 @@ public class MenuItemOptions {
             return this;
         }
 
-        public MenuItemOptionsBuilder data(final short configData) {
-            this.data = configData;
+        public MenuItemOptionsBuilder damage(final @Nullable String configDamage) {
+            this.damage = configDamage;
             return this;
         }
 
