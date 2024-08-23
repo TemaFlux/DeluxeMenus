@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class NbtProvider {
-
+    // Currently need rewrite a code for >= 1.21 versions, this system updated on this version
     private static boolean NBT_HOOKED;
 
     private static Method getStringMethod;
@@ -326,17 +326,17 @@ public final class NbtProvider {
         }
 
         private static String hasTagMethodName() {
-            if (VersionHelper.CURRENT_VERSION >= 1200) return "u"; // 1.20 variable change
-            if (VersionHelper.CURRENT_VERSION >= 1190) return "t"; // 1.19 variable change
-            if (VersionHelper.CURRENT_VERSION == 1182) return "s"; // 1.18.2 variable change
+            if (VersionHelper.CURRENT_VERSION >= 1_20_0) return "u"; // 1.20 variable change
+            if (VersionHelper.CURRENT_VERSION >= 1_19_0) return "t"; // 1.19 variable change
+            if (VersionHelper.CURRENT_VERSION == 1_18_2) return "s"; // 1.18.2 variable change
             if (VersionHelper.HAS_OBFUSCATED_NAMES) return "r"; // 1.18-1.18.1
             return "hasTag";
         }
 
         private static String getTagMethodName() {
-            if (VersionHelper.CURRENT_VERSION >= 1200) return "v"; // 1.20 variable change
-            if (VersionHelper.CURRENT_VERSION >= 1190) return "u"; // 1.19 variable change
-            if (VersionHelper.CURRENT_VERSION == 1182) return "t"; // 1.18.2 variable change
+            if (VersionHelper.CURRENT_VERSION >= 1_20_0) return "v"; // 1.20 variable change
+            if (VersionHelper.CURRENT_VERSION >= 1_19_0) return "u"; // 1.19 variable change
+            if (VersionHelper.CURRENT_VERSION == 1_18_2) return "t"; // 1.18.2 variable change
             if (VersionHelper.HAS_OBFUSCATED_NAMES) return "s"; // 1.18-1.18.1
             return "getTag";
         }
