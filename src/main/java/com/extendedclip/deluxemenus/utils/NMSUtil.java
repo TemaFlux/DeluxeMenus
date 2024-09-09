@@ -11,13 +11,24 @@ public final class NMSUtil {
      */
     public static String getVersion() {
         if (cachedVersion == null) {
-            String name = Bukkit.getServer().getClass().getPackage().getName();
-
-            if (name.equals("org.bukkit.craftbukkit")) cachedVersion = "v1_" + Bukkit.getVersion().split("-")[0]; // todo change
-            else cachedVersion = name.substring(name.lastIndexOf('.') + 1);
+            cachedVersion = extractVersionString(Bukkit.getServer().getClass().getPackage().getName());
+            if (StringUtils.isBlank(cachedVersion)) cachedVersion = extractVersionString(Bukkit.getVersion());
+            if (StringUtils.isBlank(cachedVersion)) cachedVersion = extractVersionString(Bukkit.getBukkitVersion());
         }
 
         return cachedVersion;
+    }
+
+    private static String extractVersionString(String packageVersion) {
+        if (packageVersion.equals("org.bukkit.craftbukkit")) {
+            String version = Bukkit.getVersion(); // Example: "1.21-DEV-dbfeb87 (MC: 1.21)"
+            return version.split(" ")[1].replaceAll("[^0-9.]", "");
+        } else if (packageVersion.startsWith("org.bukkit.craftbukkit.v")) {
+            return packageVersion.substring(packageVersion.lastIndexOf('.') + 1);
+        } else {
+            String bukkitVersion = Bukkit.getBukkitVersion(); // Example: "1.21-R0.1-SNAPSHOT"
+            return bukkitVersion.split("-")[0];
+        }
     }
 
     /**
@@ -25,8 +36,8 @@ public final class NMSUtil {
      */
     public static int getVersionNumber() {
         if (cachedVersionNumber == -1) {
-            String name = getVersion().substring(3);
-            cachedVersionNumber = Integer.parseInt(name.substring(0, name.length() - 3));
+            String name = getVersion();
+            cachedVersionNumber = Integer.parseInt(name.replace(".", ""));
         }
 
         return cachedVersionNumber;
