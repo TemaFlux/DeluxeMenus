@@ -25,7 +25,7 @@ public class StringUtils {
      */
     @NotNull
     public static String color(@NotNull String input) {
-        if (StringUtils.isEmpty(input)) return input;
+        if (StringUtils.isBlank(input)) return input;
 
         // Hex Support for 1.16.1+
         Matcher m = HEX_PATTERN.matcher(input);
@@ -88,7 +88,7 @@ public class StringUtils {
         return input;
     }
 
-    public static boolean isEmpty(String value) {
+    public static boolean isBlank(String value) {
         return value == null || value.isEmpty() || value.trim().isEmpty();
     }
 }
