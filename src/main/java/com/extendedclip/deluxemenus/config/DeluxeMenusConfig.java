@@ -15,6 +15,8 @@ import com.extendedclip.deluxemenus.menu.MenuItem;
 import com.extendedclip.deluxemenus.menu.options.MenuItemOptions;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.requirement.*;
+import com.extendedclip.deluxemenus.requirement.custom.CooldownRequirement;
+import com.extendedclip.deluxemenus.requirement.custom.CoreBuyRequirement;
 import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
 import com.extendedclip.deluxemenus.utils.*;
 import com.google.common.base.Enums;
@@ -1309,6 +1311,8 @@ public class DeluxeMenusConfig {
                         );
                     }
                     break;
+
+                // Custom
                 case COOLDOWN:
                     if (c.contains(rPath + ".time")) {
                         req = new CooldownRequirement(menuName, c.getInt(rPath + ".time"));
@@ -1320,6 +1324,18 @@ public class DeluxeMenusConfig {
                         );
                     }
                     break;
+
+                case COMMONS_BUY:
+                    if (c.contains(rPath + ".amount")) {
+                        req = new CoreBuyRequirement(
+                            c.getString(rPath + ".from"),
+                            c.getString(rPath + ".economy"),
+                            c.getInt(rPath + ".amount"),
+                            c.getString(rPath + ".reason", menuName)
+                        );
+                    }
+                    break;
+
                 default:
                     break;
             }

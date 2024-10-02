@@ -83,7 +83,9 @@ public enum RequirementType {
           "Checks if the given string can be parsed as a given Java object.",
           Arrays.asList("input", "object")),
 
-  COOLDOWN(Collections.singletonList("cooldown"), "Add cooldown after usage", Collections.singletonList("time"))
+  // Custom
+  COOLDOWN(Collections.singletonList("cooldown"), "Add cooldown after usage", Collections.singletonList("time")),
+  COMMONS_BUY(Collections.singletonList("commons-buy"), "From CoreCommons plugin using a economy", Arrays.asList("type", "amount"))
   ;
 
   private final List<String> identifier;
