@@ -33,7 +33,7 @@ extends Requirement {
             if (plugin == null) return false;
 
             me.temaflux.core.commons.api.entity.Player player = human == null ? null : plugin.getPlayer(human.getUniqueId());
-            if (player == null || amount > player.getSmite()) return false;
+            if (player == null || amount > (economy == EconomyLog.Economy.SMITE ? player.getSmite() : player.getMoney())) return false;
 
             return plugin.money(
                 from,
