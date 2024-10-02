@@ -11,6 +11,7 @@ import com.extendedclip.deluxemenus.utils.StringUtils;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 
 import me.clip.placeholderapi.util.Msg;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class Menu extends Command {
 
     private static final Map<String, Menu> menus = new HashMap<>();
-    private static final Set<MenuHolder> menuHolders = new HashSet<>();
+    private static final CopyOnWriteArraySet<MenuHolder> menuHolders = new CopyOnWriteArraySet<>();
     private static final Map<UUID, Menu> lastOpenedMenus = new HashMap<>();
     private static CommandMap commandMap = null;
 
