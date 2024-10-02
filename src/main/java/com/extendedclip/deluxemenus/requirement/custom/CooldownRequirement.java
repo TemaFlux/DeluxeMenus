@@ -1,7 +1,8 @@
-package com.extendedclip.deluxemenus.requirement;
+package com.extendedclip.deluxemenus.requirement.custom;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
+import com.extendedclip.deluxemenus.requirement.Requirement;
 import org.bukkit.entity.Player;
 
 import java.nio.charset.StandardCharsets;
