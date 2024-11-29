@@ -1198,7 +1198,7 @@ public class DeluxeMenusConfig {
                         DeluxeMenus.debug(
                                 DebugLevel.HIGHEST,
                                 Level.WARNING,
-                                "Has Permissions requirement at path: " + rPath + " does not contain a permissions: entry"
+                                "Has Permissions requirement at path: " + rPath + " does not contain permissions: entry"
                         );
                     }
                     break;
