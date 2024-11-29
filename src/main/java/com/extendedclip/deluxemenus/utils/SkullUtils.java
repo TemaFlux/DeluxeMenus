@@ -139,6 +139,16 @@ public class SkullUtils {
     return head;
   }
 
+  public static String getSkullOwner(ItemStack skull) {
+    if (skull == null || !(skull.getItemMeta() instanceof SkullMeta)) return null;
+    SkullMeta meta = (SkullMeta) skull.getItemMeta();
+    if (!VersionHelper.IS_SKULL_OWNER_LEGACY) {
+      if (meta.getOwningPlayer() == null) return null;
+      return meta.getOwningPlayer().getName();
+    }
+    return meta.getOwner();
+  }
+
   /**
    * Create a game profile object
    *
