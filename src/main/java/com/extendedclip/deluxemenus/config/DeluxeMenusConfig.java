@@ -1072,7 +1072,7 @@ public class DeluxeMenusConfig {
                         try {
                             if (!containsPlaceholders(materialName) && plugin.getItemHooks().values()
                                     .stream()
-                                    .filter(x -> materialName.startsWith(x.getPrefix()))
+                                    .filter(x -> materialName.toLowerCase().startsWith(x.getPrefix()))
                                     .findFirst()
                                     .orElse(null) == null)
                                 XMaterial.matchXMaterial(materialName.toUpperCase()).orElseThrow();
