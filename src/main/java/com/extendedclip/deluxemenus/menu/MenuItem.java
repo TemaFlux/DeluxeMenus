@@ -291,7 +291,7 @@ public class MenuItem {
         }
         if (VersionHelper.HAS_TOOLTIP_STYLE) {
             if (this.options.tooltipStyle().isPresent()) {
-                NamespacedKey tooltipStyle = NamespacedKey.fromString(this.options.tooltipStyle().get());
+                NamespacedKey tooltipStyle = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.tooltipStyle().get()));
 
                 if (tooltipStyle != null) {
                     try {
@@ -303,7 +303,7 @@ public class MenuItem {
             }
 
             if (this.options.itemModel().isPresent()) {
-                NamespacedKey itemModel = NamespacedKey.fromString(this.options.itemModel().get());
+                NamespacedKey itemModel = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.itemModel().get()));
 
                 if (itemModel != null) {
                     try {
