@@ -469,6 +469,14 @@ public class MenuItem {
                 }
             }
 
+            if (this.options.nbtByte().isPresent()) {
+                final String tag = holder.setPlaceholdersAndArguments(this.options.nbtByte().get());
+                if (tag.contains(":")) {
+                    final String[] parts = tag.split(":");
+                    itemStack = NbtProvider.setByte(itemStack, parts[0], Byte.parseByte(parts[1]));
+                }
+            }
+
             if (this.options.nbtShort().isPresent()) {
                 final String tag = holder.setPlaceholdersAndArguments(this.options.nbtShort().get());
                 if (tag.contains(":")) {
@@ -490,6 +498,14 @@ public class MenuItem {
                 if (tag.contains(":")) {
                     final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setString(itemStack, parts[0], parts[1]);
+                }
+            }
+
+            for (String nbtTag : this.options.nbtBytes()) {
+                final String tag = holder.setPlaceholdersAndArguments(nbtTag);
+                if (tag.contains(":")) {
+                    final String[] parts = tag.split(":");
+                    itemStack = NbtProvider.setByte(itemStack, parts[0], Byte.parseByte(parts[1]));
                 }
             }
 
