@@ -31,6 +31,7 @@ dependencies {
     compileOnly(libs.headdb)
     compileOnly(libs.itemsadder)
     compileOnly(libs.oraxen)
+    compileOnly(libs.mythiclib)
     compileOnly(libs.mmoitems)
     compileOnly(libs.score)
 
