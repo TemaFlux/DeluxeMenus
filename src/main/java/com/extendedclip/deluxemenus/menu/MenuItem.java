@@ -22,7 +22,6 @@ import org.bukkit.block.data.type.Light;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
@@ -254,33 +253,65 @@ public class MenuItem {
         if (VersionHelper.HAS_DATA_COMPONENTS) {
             if (this.options.hideTooltip().isPresent()) {
                 String hideTooltip = holder.setPlaceholdersAndArguments(this.options.hideTooltip().get());
-                itemMeta.setHideTooltip(Boolean.parseBoolean(hideTooltip));
+
+                try {
+                    itemMeta.getClass().getMethod("setHideTooltip", boolean.class).invoke(itemMeta, Boolean.parseBoolean(hideTooltip));
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
+
             if (this.options.enchantmentGlintOverride().isPresent()) {
                 String enchantmentGlintOverride = holder.setPlaceholdersAndArguments(this.options.enchantmentGlintOverride().get());
-                itemMeta.setEnchantmentGlintOverride(Boolean.parseBoolean(enchantmentGlintOverride));
+
+                try {
+                    itemMeta.getClass().getMethod("setEnchantmentGlintOverride", boolean.class).invoke(itemMeta, Boolean.parseBoolean(enchantmentGlintOverride));
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
+
             if (this.options.rarity().isPresent()) {
                 String rarity = holder.setPlaceholdersAndArguments(this.options.rarity().get());
+
                 try {
-                    itemMeta.setRarity(ItemRarity.valueOf(rarity.toUpperCase()));
+                    @SuppressWarnings({ "unchecked", "rawtypes" })
+                    Class<Enum> enumClass = (Class<Enum>) Class.forName("org.bukkit.inventory.ItemRarity");
+                    itemMeta.getClass().getMethod("setRarity", enumClass).invoke(itemMeta, Enum.valueOf(enumClass, rarity.toUpperCase()));
                 } catch (IllegalArgumentException e) {
                     DeluxeMenus.debug(
                             DebugLevel.HIGHEST,
                             Level.WARNING,
                             "Rarity " + rarity + " is not a valid!"
                     );
+                } catch (Throwable e) {
+                    e.printStackTrace();
                 }
             }
         }
         if (VersionHelper.HAS_TOOLTIP_STYLE) {
             if (this.options.tooltipStyle().isPresent()) {
                 NamespacedKey tooltipStyle = NamespacedKey.fromString(this.options.tooltipStyle().get());
-                if (tooltipStyle != null) itemMeta.setTooltipStyle(tooltipStyle);
+
+                if (tooltipStyle != null) {
+                    try {
+                        itemMeta.getClass().getMethod("setTooltipStyle", NamespacedKey.class).invoke(itemMeta, tooltipStyle);
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
             }
+
             if (this.options.itemModel().isPresent()) {
                 NamespacedKey itemModel = NamespacedKey.fromString(this.options.itemModel().get());
-                if (itemModel != null) itemMeta.setItemModel(itemModel);
+
+                if (itemModel != null) {
+                    try {
+                        itemMeta.getClass().getMethod("setItemModel", NamespacedKey.class).invoke(itemMeta, itemModel);
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
 
