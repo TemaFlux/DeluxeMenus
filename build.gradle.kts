@@ -44,8 +44,8 @@ dependencies {
 
     compileOnly("org.jetbrains:annotations:23.0.0")
 
-    compileOnly(files("../CoreCommons/build/libs/CoreCommons-all.jar"))
-    testImplementation(files("../BukkitConfiguration/build/libs/BukkitConfiguration-1.0-SNAPSHOT.jar"))
+    compileOnly(project(":abstract-api"))
+    testImplementation(files("libs/BukkitConfiguration-1.0-SNAPSHOT.jar"))
 }
 
 tasks {
