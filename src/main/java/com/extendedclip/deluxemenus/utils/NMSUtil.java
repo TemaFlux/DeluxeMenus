@@ -20,11 +20,18 @@ public final class NMSUtil {
     }
 
     private static String extractVersionString(String packageVersion) {
+        if (packageVersion == null || packageVersion.isBlank()) return "";
+
         if (packageVersion.equals("org.bukkit.craftbukkit")) {
             String version = Bukkit.getVersion(); // Example: "1.21-DEV-dbfeb87 (MC: 1.21)"
             return version.split(" ")[1].replaceAll("[^0-9.]", "");
         } else if (packageVersion.startsWith("org.bukkit.craftbukkit.v")) {
-            return packageVersion.substring(packageVersion.lastIndexOf('.') + 1);
+            // Example: org.bukkit.craftbukkit.v1_16_R3
+
+            int lastSplitIndex = packageVersion.lastIndexOf('.') + 1;
+            String versionId = packageVersion.substring(lastSplitIndex);
+
+            return versionId.substring(1, versionId.lastIndexOf('_') + 1).replace('_', '.');
         } else {
             String bukkitVersion = Bukkit.getBukkitVersion(); // Example: "1.21-R0.1-SNAPSHOT"
             return bukkitVersion.split("-")[0];
