@@ -74,8 +74,11 @@ public class DeluxeMenusCommand implements CommandExecutor {
     }
 
     private void registerSubCommands() {
-        subCommands.put("dump", new DumpCommand(plugin));
-        subCommands.put("execute", new ExecuteCommand(plugin));
+        if (plugin.getConfig().getBoolean("unsafe", false)) {
+            subCommands.put("dump", new DumpCommand(plugin));
+            subCommands.put("execute", new ExecuteCommand(plugin));
+        }
+
         subCommands.put("help", new HelpCommand(plugin));
         subCommands.put("list", new ListCommand(plugin));
         subCommands.put("open", new OpenCommand(plugin));
