@@ -1,6 +1,5 @@
 package com.extendedclip.deluxemenus.action;
 
-import com.cryptomorin.xseries.XSound;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
@@ -352,7 +351,7 @@ public class ClickActionTask implements Runnable {
 
                 if (!executable.contains(" ")) {
                     try {
-                        sound = XSound.matchXSound(executable.toUpperCase()).orElseThrow().parseSound();
+                        sound = SoundUtils.getSound(executable.toUpperCase());
                     } catch (final IllegalArgumentException exception) {
                         DeluxeMenus.printStacktrace(
                                 "Sound name given for sound action: " + executable + ", is not a valid sound!",
@@ -364,7 +363,7 @@ public class ClickActionTask implements Runnable {
                     String[] parts = executable.split(" ", 3);
 
                     try {
-                        sound = XSound.matchXSound(parts[0].toUpperCase()).orElseThrow().parseSound();
+                        sound = SoundUtils.getSound(parts[0].toUpperCase());
                     } catch (final IllegalArgumentException exception) {
                         DeluxeMenus.printStacktrace(
                                 "Sound name given for sound action: " + parts[0] + ", is not a valid sound!",
