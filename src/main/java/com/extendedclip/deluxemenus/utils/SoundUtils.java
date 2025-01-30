@@ -11,7 +11,7 @@ public class SoundUtils {
             // This fixes java.lang.IncompatibleClassChangeError when trying to use versions prior to 1.21.3.
             Method valueOfMethod = Class.forName("org.bukkit.Sound").getMethod("valueOf", String.class);
             return (Sound) valueOfMethod.invoke(null, name);
-        } catch (Exception e) {
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             // Use the Sound#valueOf method if Reflection fails.
             return Sound.valueOf(name);
         } */
