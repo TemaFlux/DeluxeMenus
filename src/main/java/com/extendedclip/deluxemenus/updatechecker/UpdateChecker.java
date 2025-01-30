@@ -1,26 +1,24 @@
 package com.extendedclip.deluxemenus.updatechecker;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
+import com.extendedclip.deluxemenus.listener.Listener;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.Messages;
-import com.extendedclip.deluxemenus.utils.SchedulerUtil;
-import net.kyori.adventure.text.TextReplacementConfig;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+import net.kyori.adventure.text.TextReplacementConfig;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
-public class UpdateChecker implements Listener {
+public class UpdateChecker extends Listener {
 
   private static final TextReplacementConfig.Builder LATEST_VERSION_REPLACER_BUILDER
       = TextReplacementConfig.builder().matchLiteral("<latest-version>");
@@ -28,22 +26,27 @@ public class UpdateChecker implements Listener {
       = TextReplacementConfig.builder().matchLiteral("<current-version>");
 
   final int resourceId = 11734;
-  private final DeluxeMenus plugin;
   private String latestVersion = null;
   private boolean updateAvailable = false;
 
   public UpdateChecker(final @NotNull DeluxeMenus instance) {
-    plugin = instance;
+    super(instance);
 
-    SchedulerUtil.runTaskAsynchronously(instance, () -> {
-      if (check()) {
-        SchedulerUtil.runTask(instance, null, this::register);
+    new BukkitRunnable() {
+      @Override
+      public void run() {
+        if (check()) {
+          new BukkitRunnable() {
+
+            @Override
+            public void run() {
+              register();
+            }
+          }.runTask(plugin);
+        }
       }
-    });
-  }
 
-  private void register() {
-    Bukkit.getPluginManager().registerEvents(this, plugin);
+    }.runTaskAsynchronously(plugin);
   }
 
   @EventHandler(priority = EventPriority.MONITOR)
@@ -76,7 +79,7 @@ public class UpdateChecker implements Listener {
       connection.setRequestMethod("GET");
       return new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
     } catch (Exception ex) {
-      DeluxeMenus.debug(
+      plugin.debug(
           DebugLevel.HIGH,
           Level.INFO,
           "Failed to check for update on spigot!"

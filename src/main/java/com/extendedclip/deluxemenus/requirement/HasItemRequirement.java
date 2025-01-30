@@ -14,10 +14,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class HasItemRequirement extends Requirement {
 
+  private final DeluxeMenus plugin;
   private final ItemWrapper wrapper;
   private final boolean invert, remove;
 
-  public HasItemRequirement(ItemWrapper wrapper, boolean invert, boolean remove) {
+  public HasItemRequirement(final DeluxeMenus plugin, final ItemWrapper wrapper, final boolean invert, final boolean remove) {
+    this.plugin = plugin;
     this.wrapper = wrapper;
     this.invert = invert;
     this.remove = remove;
@@ -29,7 +31,7 @@ public class HasItemRequirement extends Requirement {
     Material material = DeluxeMenus.MATERIALS.get(materialName.toUpperCase());
     ItemHook pluginHook = null;
     if (material == null) {
-      pluginHook = DeluxeMenus.getInstance().getItemHooks().values()
+      pluginHook = plugin.getItemHooks().values()
               .stream()
               .filter(x -> materialName.toLowerCase().startsWith(x.getPrefix()))
               .findFirst()
@@ -75,7 +77,7 @@ public class HasItemRequirement extends Requirement {
     if (pluginHook != null) {
       if (!pluginHook.itemMatchesIdentifiers(itemToCheck, holder.setPlaceholdersAndArguments(wrapper.getMaterial().substring(pluginHook.getPrefix().length())))) return false;
     }
-    else if (wrapper.getMaterial() != null && itemToCheck.getType() != material) return false;    if (wrapper.getMaterial() != null && itemToCheck.getType() != material) return false;
+    else if (wrapper.getMaterial() != null && itemToCheck.getType() != material) return false;
     if (wrapper.hasData() && itemToCheck.getDurability() != wrapper.getData()) return false;
 
     ItemMeta metaToCheck = itemToCheck.getItemMeta();

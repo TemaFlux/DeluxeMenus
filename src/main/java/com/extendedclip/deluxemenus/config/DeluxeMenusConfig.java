@@ -14,7 +14,21 @@ import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.menu.MenuItem;
 import com.extendedclip.deluxemenus.menu.options.MenuItemOptions;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
-import com.extendedclip.deluxemenus.requirement.*;
+import com.extendedclip.deluxemenus.requirement.HasExpRequirement;
+import com.extendedclip.deluxemenus.requirement.HasItemRequirement;
+import com.extendedclip.deluxemenus.requirement.HasMetaRequirement;
+import com.extendedclip.deluxemenus.requirement.HasMoneyRequirement;
+import com.extendedclip.deluxemenus.requirement.HasPermissionRequirement;
+import com.extendedclip.deluxemenus.requirement.HasPermissionsRequirement;
+import com.extendedclip.deluxemenus.requirement.InputResultRequirement;
+import com.extendedclip.deluxemenus.requirement.IsNearRequirement;
+import com.extendedclip.deluxemenus.requirement.IsObjectRequirement;
+import com.extendedclip.deluxemenus.requirement.JavascriptRequirement;
+import com.extendedclip.deluxemenus.requirement.RegexMatchesRequirement;
+import com.extendedclip.deluxemenus.requirement.Requirement;
+import com.extendedclip.deluxemenus.requirement.RequirementList;
+import com.extendedclip.deluxemenus.requirement.RequirementType;
+import com.extendedclip.deluxemenus.requirement.StringLengthRequirement;
 import com.extendedclip.deluxemenus.requirement.custom.CooldownRequirement;
 import com.extendedclip.deluxemenus.requirement.custom.CoreBuyRequirement;
 import com.extendedclip.deluxemenus.requirement.wrappers.ItemWrapper;
@@ -23,6 +37,7 @@ import com.google.common.base.Enums;
 import com.google.common.primitives.Ints;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -35,10 +50,23 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -46,30 +74,46 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.extendedclip.deluxemenus.utils.Constants.*;
+import static com.extendedclip.deluxemenus.utils.Constants.PLACEHOLDER_PREFIX;
+import static com.extendedclip.deluxemenus.utils.Constants.PLAYER_ITEMS;
+import static com.extendedclip.deluxemenus.utils.Constants.WATER_BOTTLE;
 
 public class DeluxeMenusConfig {
 
     public static final List<String> VALID_MATERIALS = new ArrayList<>();
     public static final List<String> VALID_MATERIAL_PREFIXES = new ArrayList<>();
+    public static final Pattern DELAY_MATCHER = Pattern.compile("<delay=([^<>]+)>", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CHANCE_MATCHER = Pattern.compile("<chance=([^<>]+)>", Pattern.CASE_INSENSITIVE);
+    public static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%((?<identifier>[a-zA-Z0-9]+)_)(?<parameters>[^%]+)%");
+    private static final List<InventoryType> VALID_INVENTORY_TYPES = VersionHelper.getValidInventoryTypes();
 
     static {
         VALID_MATERIALS.addAll(PLAYER_ITEMS);
         VALID_MATERIALS.add(WATER_BOTTLE);
 
         VALID_MATERIAL_PREFIXES.add(PLACEHOLDER_PREFIX);
-        VALID_MATERIAL_PREFIXES.addAll(
-                DeluxeMenus.getInstance().getItemHooks().values()
-                        .stream()
-                        .map(ItemHook::getPrefix)
-                        .collect(Collectors.toList())
-        );
     }
 
-    public static final Pattern DELAY_MATCHER = Pattern.compile("<delay=([^<>]+)>", Pattern.CASE_INSENSITIVE);
-    public static final Pattern CHANCE_MATCHER = Pattern.compile("<chance=([^<>]+)>", Pattern.CASE_INSENSITIVE);
-    public static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%((?<identifier>[a-zA-Z0-9]+)_)(?<parameters>[^%]+)%");
-    private static final List<InventoryType> VALID_INVENTORY_TYPES = VersionHelper.getValidInventoryTypes();
+    private final String separator = File.separator;
+    private final File menuDirectory;
+    private final DeluxeMenus plugin;
+    private final List<String> exampleMenus = Arrays.asList("basics_menu", "advanced_menu", "requirements_menu"
+            // more example menus here
+    );
+
+    public DeluxeMenusConfig(@NotNull final DeluxeMenus plugin) {
+        VALID_MATERIAL_PREFIXES.addAll(plugin.getItemHooks().values().stream().map(ItemHook::getPrefix).collect(Collectors.toList()));
+
+        this.plugin = plugin;
+        menuDirectory = new File(this.plugin.getDataFolder() + separator + "gui_menus");
+        try {
+            if (menuDirectory.mkdirs()) {
+                plugin.debug(DebugLevel.HIGH, Level.INFO, "Individual menus directory did not exist.", "Created directory: plugins" + separator + "DeluxeMenus" + separator + "gui_menus");
+            }
+        } catch (SecurityException e) {
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Something went wrong while creating directory: plugins" + separator + "DeluxeMenus" + separator + "gui_menus");
+        }
+    }
 
     private static boolean isValidMaterial(final @NotNull String material) {
         final String lowercaseMaterial = material.toLowerCase(Locale.ROOT);
@@ -91,37 +135,8 @@ public class DeluxeMenusConfig {
         return false;
     }
 
-    private final String separator = File.separator;
-    private final File menuDirectory;
-    private final DeluxeMenus plugin;
-
-    private final List<String> exampleMenus = Arrays.asList(
-            "basics_menu",
-            "advanced_menu",
-            "requirements_menu"
-            // more example menus here
-    );
-
-    public DeluxeMenusConfig(DeluxeMenus plugin) {
-        this.plugin = plugin;
-        menuDirectory = new File(this.plugin.getDataFolder() + separator + "gui_menus");
-        try {
-            if (menuDirectory.mkdirs()) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGH,
-                        Level.INFO,
-                        "Individual menus directory did not exist.",
-                        "Created directory: plugins" + separator + "DeluxeMenus" + separator + "gui_menus"
-                );
-            }
-        } catch (SecurityException e) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.WARNING,
-                    "Something went wrong while creating directory: plugins" + separator + "DeluxeMenus" + separator
-                            + "gui_menus"
-            );
-        }
+    public static boolean containsPlaceholders(String text) {
+        return PLACEHOLDER_PATTERN.matcher(text).find();
     }
 
     private List<String> getStringListFromConfig(FileConfiguration config, String path) {
@@ -136,10 +151,6 @@ public class DeluxeMenusConfig {
         }
     }
 
-    public static boolean containsPlaceholders(String text) {
-        return PLACEHOLDER_PATTERN.matcher(text).find();
-    }
-
     public boolean loadDefConfig() {
         if (checkConfig(null, "config.yml", true) == null) {
             return false;
@@ -147,16 +158,17 @@ public class DeluxeMenusConfig {
 
         FileConfiguration c = plugin.getConfig();
 
-        c.options().header("DeluxeMenus " + plugin.getDescription().getVersion()
-                + " main configuration file"
-                + "\n"
-                + "\nA full wiki on how to use this plugin can be found at:"
-                + "\nhttps://wiki.helpch.at/clips-plugins/deluxemenus"
-                + "\n"
-
+        c.options().header(
+                "DeluxeMenus " + plugin.getDescription().getVersion() + " main configuration file" +
+                "\n" +
+                "\nA full wiki on how to use this plugin can be found at:" +
+                "\nhttps://wiki.helpch.at/helpchat-plugins/deluxemenus" +
+                "\n"
         );
-        c.addDefault("debug", "HIGHEST");
+        c.addDefault("debug", "LOW");
         c.addDefault("check_updates", true);
+        c.addDefault("use_admin_commands_in_menus_list", false);
+        c.addDefault("menus_list_page_size", 10);
         c.options().copyDefaults(true);
 
         /* if (!c.contains("gui_menus")) {
@@ -175,10 +187,7 @@ public class DeluxeMenusConfig {
             try {
                 menuFile.createNewFile();
             } catch (IOException e) {
-                DeluxeMenus.printStacktrace(
-                        "Failed to create example menus!",
-                        e
-                );
+                plugin.printStacktrace("Failed to create example menus!", e);
                 continue;
             }
             saveResourceToFile(name + ".yml", menuFile);
@@ -197,15 +206,8 @@ public class DeluxeMenusConfig {
             os.write(buffer);
             return true;
         } catch (NullPointerException | IOException ex) {
-            DeluxeMenus.printStacktrace(
-                    "Failed to update file: " + resource,
-                    ex
-            );
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Failed to save default settings for:" + file.getName() + " from resource:" + resource
-            );
+            plugin.printStacktrace("Failed to update file: " + resource, ex);
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Failed to save default settings for:" + file.getName() + " from resource:" + resource);
         }
         return false;
     }
@@ -232,10 +234,7 @@ public class DeluxeMenusConfig {
             try {
                 configFile.createNewFile();
             } catch (IOException e) {
-                DeluxeMenus.printStacktrace(
-                        "Failed to create file: " + fileName,
-                        e
-                );
+                plugin.printStacktrace("Failed to create file: " + fileName, e);
                 return null;
             }
         }
@@ -254,28 +253,14 @@ public class DeluxeMenusConfig {
             config.load(f);
             return config;
         } catch (IOException e) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Could not read file: " + f.getName()
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Could not read file: " + f.getName());
 
-            DeluxeMenus.printStacktrace(
-                    "Could not read file: " + f.getName(),
-                    e
-            );
+            plugin.printStacktrace("Could not read file: " + f.getName(), e);
             return null;
         } catch (InvalidConfigurationException e) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Detected invalid configuration in file: " + f.getName()
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Detected invalid configuration in file: " + f.getName());
 
-            DeluxeMenus.printStacktrace(
-                    "Detected invalid configuration in file: " + f.getName(),
-                    e
-            );
+            plugin.printStacktrace("Detected invalid configuration in file: " + f.getName(), e);
             return null;
         }
     }
@@ -300,7 +285,7 @@ public class DeluxeMenusConfig {
         if (c.contains("gui_menus." + menu + ".file")) {
             loadMenuFromFile(menu);
         } else {
-            loadMenu(c, menu, true);
+            loadMenu(c, menu, true, "config");
         }
 
         return true;
@@ -334,7 +319,7 @@ public class DeluxeMenusConfig {
             if (c.contains("gui_menus." + key + ".file")) {
                 loadMenuFromFile(key);
             } else {
-                loadMenu(c, key, true);
+                loadMenu(c, key, true, "config");
             }
         }
 
@@ -353,24 +338,14 @@ public class DeluxeMenusConfig {
         if (fileName == null) return false;
 
         if (!fileName.endsWith(".yml")) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Filename specified for menu: " + menuName + " is not a .yml file!",
-                    "Make sure that the file name to load this menu from is specified as a .yml file!",
-                    "Skipping loading of menu: " + menuName
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Filename specified for menu: " + menuName + " is not a .yml file!", "Make sure that the file name to load this menu from is specified as a .yml file!", "Skipping loading of menu: " + menuName);
             return false;
         }
 
         File f = new File(menuDirectory.getPath(), fileName);
 
         if (!f.exists()) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.INFO,
-                    f.getName() + " does not exist!"
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.INFO, f.getName() + " does not exist!");
 
             try {
                 File folder = f.getParentFile();
@@ -378,26 +353,12 @@ public class DeluxeMenusConfig {
 
                 f.createNewFile();
                 if (!saveResourceToFile("default_menu.yml", f)) {
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.WARNING,
-                            "Failed to create a default menu file for menu: " + menuName,
-                            "Skipping loading menu: " + menuName
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Failed to create a default menu file for menu: " + menuName, "Skipping loading menu: " + menuName);
                     return false;
                 }
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.INFO,
-                        f.getName() + " created! Add your menu options to this file and use /dm reload to load it!"
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.INFO, f.getName() + " created! Add your menu options to this file and use /dm reload to load it!");
             } catch (IOException e) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.SEVERE,
-                        "Could not create menu file: plugins" + separator + "DeluxeMenus" + separator + "gui_menus"
-                                + separator + fileName
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Could not create menu file: plugins" + separator + "DeluxeMenus" + separator + "gui_menus" + separator + fileName);
                 return false;
             }
         }
@@ -405,39 +366,28 @@ public class DeluxeMenusConfig {
         FileConfiguration cfg = checkConfig(f);
 
         if (cfg == null) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.WARNING,
-                    "Menu: " + menuName + " in file: " + fileName + " not loaded."
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Menu: " + menuName + " in file: " + fileName + " not loaded.");
             return false;
         }
 
         if (cfg.getKeys(false).isEmpty()) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGH,
-                    Level.INFO,
-                    "Menu config: " + f.getName() + " is empty! Creating default config example..."
-            );
+            plugin.debug(DebugLevel.HIGH, Level.INFO, "Menu config: " + f.getName() + " is empty! Creating default config example...");
             saveResourceToFile("default_menu.yml", f);
             return false;
         }
 
-        loadMenu(cfg, menuName, false);
+        final Path guiMenusPath = menuDirectory.toPath();
+        final Path menuPath = f.toPath();
+        final Path relativePath = guiMenusPath.relativize(menuPath);
+
+        loadMenu(cfg, menuName, false, relativePath.toString());
         return Menu.getMenuByName(menuName).isPresent();
     }
 
-    public void loadMenu(FileConfiguration c, String key, boolean mainConfig) {
+    public void loadMenu(FileConfiguration c, String key, boolean mainConfig, final @NotNull String path) {
 
         if (mainConfig) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.WARNING,
-                    "Menu: " + key + " does not have a file specified in config.yml! Creating menus in the " +
-                            "config.yml file is deprecated and will be removed in a future version! Please migrate your " +
-                            "menus to individual files in the gui_menus directory! For more information see: " +
-                            "https://wiki.helpch.at/clips-plugins/deluxemenus/external-menus"
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Menu: " + key + " does not have a file specified in config.yml! Creating menus in the " + "config.yml file is deprecated and will be removed in a future version! Please migrate your " + "menus to individual files in the gui_menus directory! For more information see: " + "https://wiki.helpch.at/clips-plugins/deluxemenus/external-menus");
         }
 
         String pre = "gui_menus." + key + ".";
@@ -447,12 +397,7 @@ public class DeluxeMenusConfig {
         }
 
         /* if (!c.contains(pre + "menu_title")) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Menu title for menu: " + key + " is not present!",
-                    "Skipping menu: " + key
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Menu title for menu: " + key + " is not present!", "Skipping menu: " + key);
             return;
         } */
 
@@ -465,12 +410,7 @@ public class DeluxeMenusConfig {
         }
 
         if (title == null || title.isEmpty()) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Menu title for menu: " + key + " is invalid!",
-                    "Skipping menu: " + key
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Menu title for menu: " + key + " is invalid!", "Skipping menu: " + key);
             return;
         }
 
@@ -483,13 +423,7 @@ public class DeluxeMenusConfig {
                 final InventoryType inventoryType = InventoryType.valueOf(c.getString(pre + "inventory_type").toUpperCase());
                 type = !VALID_INVENTORY_TYPES.contains(inventoryType) ? InventoryType.CHEST : inventoryType;
             } catch (Exception ex) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "Inventory type for menu: " + key + " is invalid!",
-                        "Valid Inventory types: " + Arrays.toString(VALID_INVENTORY_TYPES.toArray()),
-                        "Defaulting to CHEST inventory type."
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Inventory type for menu: " + key + " is invalid!", "Valid Inventory types: " + Arrays.toString(VALID_INVENTORY_TYPES.toArray()), "Defaulting to CHEST inventory type.");
             }
         }
 
@@ -503,22 +437,12 @@ public class DeluxeMenusConfig {
                 String cmd = c.getString(pre + "open_command");
 
                 if (cmd == null) {
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.SEVERE,
-                            "open_command specified for menu: " + key + " is null!",
-                            "Skipping menu: " + key
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "open_command specified for menu: " + key + " is null!", "Skipping menu: " + key);
                     return;
                 }
 
                 if (Menu.isMenuCommand(cmd)) {
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.SEVERE,
-                            "open_command specified for menu: " + key + " already exists for another menu!",
-                            "Skipping menu: " + key
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "open_command specified for menu: " + key + " already exists for another menu!", "Skipping menu: " + key);
                     return;
                 }
 
@@ -530,12 +454,7 @@ public class DeluxeMenusConfig {
 
                 for (String cmd : cmds) {
                     if (Menu.isMenuCommand(cmd)) {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "command: " + cmd + " specified for menu: " + key + " already exists for another menu!",
-                                "Skipping command: " + cmd + " in menu: " + key
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "command: " + cmd + " specified for menu: " + key + " already exists for another menu!", "Skipping command: " + cmd + " in menu: " + key);
                     } else {
                         openCommands.add(cmd.toLowerCase());
                     }
@@ -546,96 +465,70 @@ public class DeluxeMenusConfig {
         if (!openCommands.isEmpty()) {
             builder.commands(openCommands);
             builder.registerCommands(c.getBoolean(pre + "register_command", false));
-        }
 
-        List<String> argumentNames = new ArrayList<>();
-        List<RequirementList> argumentRequirements = new ArrayList<>();
+            List<String> argumentNames = new ArrayList<>();
+            List<RequirementList> argumentRequirements = new ArrayList<>();
 
-        if (c.contains(pre + "args")) {
-            // New requirements parsing
-            if (c.isConfigurationSection(pre + "args")) {
-                Set<String> mapList = c.getConfigurationSection(pre + "args").getKeys(false);
-                debug("found args");
-                for (String arg : mapList) {
-                    debug("arg: " + arg);
-                    // If it has requirements, add them
-                    if (c.contains(pre + "args." + arg + ".requirements")) {
-                        debug("arg has requirements: " + arg);
-                        argumentRequirements.add(this.getRequirements(c, pre + "args." + arg));
+            if (c.contains(pre + "args")) {
+                // New requirements parsing
+                if (c.isConfigurationSection(pre + "args")) {
+                    Set<String> mapList = c.getConfigurationSection(pre + "args").getKeys(false);
+                    debug("found args");
+                    for (String arg : mapList) {
+                        debug("arg: " + arg);
+                        // If it has requirements, add them
+                        if (c.contains(pre + "args." + arg + ".requirements")) {
+                            debug("arg has requirements: " + arg);
+                            argumentRequirements.add(this.getRequirements(c, key, pre + "args." + arg));
+                        }
+                        // Always add the arg itself
+                        argumentNames.add(arg);
                     }
-                    // Always add the arg itself
-                    argumentNames.add(arg);
+                    // Old list parsing
+                } else if (c.isList(pre + "args")) {
+                    argumentNames.addAll(c.getStringList(pre + "args"));
+                    // Old singular item parsing
+                } else if (c.isString(pre + "args")) {
+                    argumentNames.add(c.getString(pre + "args"));
                 }
-                // Old list parsing
-            } else if (c.isList(pre + "args")) {
-                argumentNames.addAll(c.getStringList(pre + "args"));
-                // Old singular item parsing
-            } else if (c.isString(pre + "args")) {
-                argumentNames.add(c.getString(pre + "args"));
             }
-        }
 
-        builder.arguments(argumentNames);
-        builder.argumentRequirements(argumentRequirements);
-        builder.argumentsUsageMessage(c.getString(pre + "args_usage_message", null));
+            builder.arguments(argumentNames);
+            builder.argumentRequirements(argumentRequirements);
+            builder.argumentsUsageMessage(c.getString(pre + "args_usage_message", null));
+        }
 
         int size; // 54
         List<String> pattern = c.getStringList(pre + "pattern");
 
         if (type == InventoryType.CHEST) {
             /* if (!c.contains(pre + "size")) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.INFO,
-                        "Menu size for menu: " + key + " is not present!",
-                        "Using default size of 54"
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.INFO, "Menu size for menu: " + key + " is not present!", "Using default size of 54");
             } else { */
                 size = c.getInt(pre + "size", pattern.size() * 9);
 
-                if ((size + 1) % 9 == 0)
-                    size++;
+                if ((size + 1) % 9 == 0) size++;
 
-                if ((size - 1) % 9 == 0)
-                    size--;
+                if ((size - 1) % 9 == 0) size--;
 
                 if (size < 9) {
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.INFO,
-                            "Menu size for menu: " + key + " is lower than 9",
-                            "Defaulting to 9."
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.INFO, "Menu size for menu: " + key + " is lower than 9", "Defaulting to 9.");
                     size = 9;
                 }
 
                 if (size > 54) {
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.WARNING,
-                            "Menu size for menu: " + key + " is higher than 54",
-                            "Defaulting to 54."
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Menu size for menu: " + key + " is higher than 54", "Defaulting to 54.");
                     size = 54;
                 }
 
                 if (size % 9 != 0) {
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.WARNING,
-                            "Menu size for menu: " + key + " is not a multiple of 9",
-                            "Defaulting to 54."
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Menu size for menu: " + key + " is not a multiple of 9", "Defaulting to 54.");
                     size = 54;
                 }
             // }
         } else {
             size = type.getDefaultSize();
-            DeluxeMenus.debug(
-                    DebugLevel.LOWEST,
-                    Level.INFO,
-                    "TYPE IS: " + type + ". Setting size to:" + type.getDefaultSize()
-            );
+            plugin.debug(DebugLevel.LOWEST, Level.INFO, "TYPE IS: " + type + ". Setting size to:" + type.getDefaultSize());
         }
 
         builder.size(size);
@@ -661,12 +554,7 @@ public class DeluxeMenusConfig {
         Map<Integer, TreeMap<Integer, MenuItem>> items = loadMenuItems(c, key, mainConfig, pattern);
 
         if (items == null || items.isEmpty()) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.SEVERE,
-                    "Failed to load menu items for menu: " + key,
-                    "Skipping menu: " + key
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.SEVERE, "Failed to load menu items for menu: " + key, "Skipping menu: " + key);
             return;
         }
 
@@ -674,7 +562,7 @@ public class DeluxeMenusConfig {
         builder.parsePlaceholdersAfterArguments(c.getBoolean(pre + "parse_placeholders_after_arguments", false));
 
         // Don't need to register the menu since it's done in the constructor
-        new Menu(builder.build(), items);
+        new Menu(plugin, builder.build(), items, path);
     }
 
     private Map<Integer, TreeMap<Integer, MenuItem>> loadMenuItems(FileConfiguration c, String name,
@@ -703,24 +591,14 @@ public class DeluxeMenusConfig {
             String currentPath = itemsPath + "." + key + ".";
 
             if (!c.contains(currentPath + "material")) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "Material for item: " + key + " in menu: " + name + " is not present!",
-                        "Skipping item: " + key
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Material for item: " + key + " in menu: " + name + " is not present!", "Skipping item: " + key);
                 continue;
             }
 
             final String material = c.getString(currentPath + "material");
             final String lowercaseMaterial = material.toLowerCase(Locale.ROOT);
             if (!isValidMaterial(lowercaseMaterial)) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "Material for item: " + key + " in menu: " + name + " is not valid!",
-                        "Skipping item: " + key
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Material for item: " + key + " in menu: " + name + " is not valid!", "Skipping item: " + key);
                 continue;
             }
 
@@ -768,12 +646,7 @@ public class DeluxeMenusConfig {
                     builder.loreAppendMode(LoreAppendMode.valueOf(loreAppendMode));
                 } catch (IllegalArgumentException | NullPointerException ignored) {
                     builder.loreAppendMode(LoreAppendMode.OVERRIDE); // Defaults to override in case of invalid append mode
-                    DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.WARNING,
-                            "Lore append mode: " + loreAppendMode + " for item: " + key + " in menu: " + name
-                                    + " is not a valid lore append mode!"
-                    );
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Lore append mode: " + loreAppendMode + " for item: " + key + " in menu: " + name + " is not a valid lore append mode!");
                 }
             }
 
@@ -785,12 +658,7 @@ public class DeluxeMenusConfig {
                     ItemFlag flag = Enums.getIfPresent(ItemFlag.class, flagAsString.toUpperCase()).orNull();
 
                     if (flag == null) {
-                        DeluxeMenus.debug(
-                            DebugLevel.HIGHEST,
-                            Level.WARNING,
-                            "Item flag: " + flagAsString + " for item: " + key + " in menu: " + name
-                                + " is not a valid item flag!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Item flag: " + flagAsString + " for item: " + key + " in menu: " + name + " is not a valid item flag!");
                         continue;
                     }
 
@@ -813,22 +681,14 @@ public class DeluxeMenusConfig {
 
                 for (String e : c.getStringList(currentPath + "banner_meta")) {
                     if (!e.contains(";")) {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                         continue;
                     }
 
                     String[] metaParts = e.split(";", 2);
 
                     if (metaParts.length != 2) {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                         continue;
                     }
 
@@ -839,16 +699,9 @@ public class DeluxeMenusConfig {
                         color = DyeColor.valueOf(metaParts[0].toUpperCase());
                         type = PatternType.valueOf(metaParts[1].toUpperCase());
                     } catch (IllegalArgumentException exception) {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
 
-                        DeluxeMenus.printStacktrace(
-                                "Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!",
-                                exception
-                        );
+                        plugin.printStacktrace("Banner Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!", exception);
                         continue;
                     }
 
@@ -866,22 +719,14 @@ public class DeluxeMenusConfig {
                     try {
 
                         if (!e.contains(";")) {
-                            DeluxeMenus.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                            );
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                             continue;
                         }
 
                         String[] metaParts = e.split(";", 3);
 
                         if (metaParts.length != 3) {
-                            DeluxeMenus.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                            );
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                             continue;
                         }
 
@@ -890,22 +735,14 @@ public class DeluxeMenusConfig {
                         int amplifier = Integer.parseInt(metaParts[2]);
 
                         if (type == null) {
-                            DeluxeMenus.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                            );
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                             continue;
                         }
 
                         potionEffects.add(type.createEffect(duration, amplifier));
 
                     } catch (Exception ex) {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Potion Meta for item: " + key + ", meta entry: " + e + " is invalid! Skipping this entry!");
                     }
                 }
                 if (!potionEffects.isEmpty()) {
@@ -922,50 +759,42 @@ public class DeluxeMenusConfig {
             if (c.contains(currentPath + "click_commands")) {
                 builder.clickHandler(getClickHandler(c, currentPath + "click_commands"));
                 if (c.contains(currentPath + "click_requirement")) {
-                    builder.clickRequirements(
-                            this.getRequirements(c, key, currentPath + "click_requirement"));
+                    builder.clickRequirements(this.getRequirements(c, key, currentPath + "click_requirement"));
                 }
             }
 
             if (c.contains(currentPath + "left_click_commands")) {
                 builder.leftClickHandler(getClickHandler(c, currentPath + "left_click_commands"));
                 if (c.contains(currentPath + "left_click_requirement")) {
-                    builder.leftClickRequirements(
-                            this.getRequirements(c, key, currentPath + "left_click_requirement"));
+                    builder.leftClickRequirements(this.getRequirements(c, key, currentPath + "left_click_requirement"));
                 }
             }
 
             if (c.contains(currentPath + "right_click_commands")) {
                 builder.rightClickHandler(getClickHandler(c, currentPath + "right_click_commands"));
                 if (c.contains(currentPath + "right_click_requirement")) {
-                    builder.rightClickRequirements(
-                            this.getRequirements(c, key, currentPath + "right_click_requirement"));
+                    builder.rightClickRequirements(this.getRequirements(c, key, currentPath + "right_click_requirement"));
                 }
             }
 
             if (c.contains(currentPath + "shift_left_click_commands")) {
-                builder.shiftLeftClickHandler(
-                        getClickHandler(c, currentPath + "shift_left_click_commands"));
+                builder.shiftLeftClickHandler(getClickHandler(c, currentPath + "shift_left_click_commands"));
                 if (c.contains(currentPath + "shift_left_click_requirement")) {
-                    builder.shiftLeftClickRequirements(
-                            this.getRequirements(c, key, currentPath + "shift_left_click_requirement"));
+                    builder.shiftLeftClickRequirements(this.getRequirements(c, key, currentPath + "shift_left_click_requirement"));
                 }
             }
 
             if (c.contains(currentPath + "shift_right_click_commands")) {
-                builder.shiftRightClickHandler(
-                        getClickHandler(c, currentPath + "shift_right_click_commands"));
+                builder.shiftRightClickHandler(getClickHandler(c, currentPath + "shift_right_click_commands"));
                 if (c.contains(currentPath + "shift_right_click_requirement")) {
-                    builder.shiftRightClickRequirements(
-                            this.getRequirements(c, key, currentPath + "shift_right_click_requirement"));
+                    builder.shiftRightClickRequirements(this.getRequirements(c, key, currentPath + "shift_right_click_requirement"));
                 }
             }
 
             if (c.contains(currentPath + "middle_click_commands")) {
                 builder.middleClickHandler(getClickHandler(c, currentPath + "middle_click_commands"));
                 if (c.contains(currentPath + "middle_click_requirement")) {
-                    builder.middleClickRequirements(
-                            this.getRequirements(c, key, currentPath + "middle_click_requirement"));
+                    builder.middleClickRequirements(this.getRequirements(c, key, currentPath + "middle_click_requirement"));
                 }
             }
 
@@ -1011,7 +840,7 @@ public class DeluxeMenusConfig {
                 slots.add(c.getInt(currentPath + "slot", 0));
             }
 
-            final MenuItem menuItem = new MenuItem(builder.build());
+            final MenuItem menuItem = new MenuItem(plugin, builder.build());
 
             for (int slot : slots) {
                 TreeMap<Integer, MenuItem> slotPriorityMap;
@@ -1021,10 +850,7 @@ public class DeluxeMenusConfig {
                 } else {
                     slotPriorityMap = menuItems.get(slot);
                 }
-                slotPriorityMap.put(
-                        menuItem.options().priority(),
-                        new MenuItem(menuItem.options().asBuilder().slot(slot).build())
-                );
+                slotPriorityMap.put(menuItem.options().priority(), new MenuItem(plugin, menuItem.options().asBuilder().slot(slot).build()));
             }
         }
         return menuItems;
@@ -1047,11 +873,7 @@ public class DeluxeMenusConfig {
             debug("requirement: " + key + " from requirements list");
             String rPath = path + ".requirements." + key;
             if (!c.contains(rPath + ".type")) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "No type set for requirement: " + key + " for path: " + rPath
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "No type set for requirement: " + key + " for path: " + rPath);
                 continue;
             }
 
@@ -1059,11 +881,7 @@ public class DeluxeMenusConfig {
             RequirementType type = RequirementType.getType(stringType);
 
             if (type == null) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "Requirement type '" + stringType + "' at path '" + rPath + "' is not valid!"
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Requirement type '" + stringType + "' at path '" + rPath + "' is not valid!");
                 continue;
             }
 
@@ -1086,20 +904,12 @@ public class DeluxeMenusConfig {
                                     .orElse(null) == null)
                                 XMaterial.matchXMaterial(materialName.toUpperCase()).orElseThrow();
                         } catch (Exception ex) {
-                            DeluxeMenus.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "has item requirement at path: " + rPath + " does not specify a valid Material name!"
-                            );
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "has item requirement at path: " + rPath + " does not specify a valid Material name!");
                             break;
                         }
                         wrapper.setMaterial(materialName);
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "has item requirement at path: " + rPath + " does not contain a material: entry!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "has item requirement at path: " + rPath + " does not contain a material: entry!");
                         break;
                     }
                     wrapper.setAmount(c.getInt(rPath + ".amount", 1));
@@ -1153,7 +963,7 @@ public class DeluxeMenusConfig {
                     }
 
                     invert = type == RequirementType.DOES_NOT_HAVE_ITEM;
-                    req = new HasItemRequirement(wrapper, invert, c.getBoolean(rPath + ".remove", false));
+                    req = new HasItemRequirement(plugin, wrapper, invert, c.getBoolean(rPath + ".remove", false));
                     break;
                 case HAS_PERMISSION:
                 case DOES_NOT_HAVE_PERMISSION:
@@ -1161,11 +971,7 @@ public class DeluxeMenusConfig {
                         invert = type == RequirementType.DOES_NOT_HAVE_PERMISSION;
                         req = new HasPermissionRequirement(c.getString(rPath + ".permission"), invert);
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Has Permission requirement at path: " + rPath + " does not contain a permission: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Has Permission requirement at path: " + rPath + " does not contain a permission: entry");
                     }
                     break;
                 case HAS_PERMISSIONS:
@@ -1174,7 +980,7 @@ public class DeluxeMenusConfig {
                         invert = type == RequirementType.DOES_NOT_HAVE_PERMISSIONS;
                         int minimum = -1;
                         if (c.contains(rPath + ".minimum") && (minimum = c.getInt(rPath + ".minimum")) < 1) {
-                            DeluxeMenus.debug(
+                            plugin.debug(
                                     DebugLevel.HIGHEST,
                                     Level.WARNING,
                                     "Has Permissions requirement at path: " + rPath + " has a minimum lower than 1. All permissions will be checked"
@@ -1183,14 +989,14 @@ public class DeluxeMenusConfig {
                         }
                         List<String> permissions = c.getStringList(rPath + ".permissions");
                         if (permissions.isEmpty()) {
-                            DeluxeMenus.debug(
+                            plugin.debug(
                                     DebugLevel.HIGHEST,
                                     Level.WARNING,
                                     "Has Permissions requirement at path: " + rPath + " has no permissions to check. Ignoring..."
                             );
                             break;
                         } else if (minimum > permissions.size()) {
-                            DeluxeMenus.debug(
+                            plugin.debug(
                                     DebugLevel.HIGHEST,
                                     Level.WARNING,
                                     "Has Permissions requirement at path: " + rPath + " has a minimum higher than the amount of permissions. Using "+permissions.size()+" instead"
@@ -1199,7 +1005,7 @@ public class DeluxeMenusConfig {
                         }
                         req = new HasPermissionsRequirement(permissions, minimum, invert);
                     } else {
-                        DeluxeMenus.debug(
+                        plugin.debug(
                                 DebugLevel.HIGHEST,
                                 Level.WARNING,
                                 "Has Permissions requirement at path: " + rPath + " does not contain permissions: entry"
@@ -1208,13 +1014,9 @@ public class DeluxeMenusConfig {
                     break;
                 case JAVASCRIPT:
                     if (c.contains(rPath + ".expression")) {
-                        req = new JavascriptRequirement(c.getString(rPath + ".expression"));
+                        req = new JavascriptRequirement(plugin, c.getString(rPath + ".expression"));
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Javascript requirement at path: " + rPath + " does not contain an expression: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Javascript requirement at path: " + rPath + " does not contain an expression: entry");
                     }
                     break;
                 case EQUAL_TO:
@@ -1230,49 +1032,31 @@ public class DeluxeMenusConfig {
                 case STRING_DOES_NOT_EQUAL:
                 case STRING_DOES_NOT_EQUAL_IGNORECASE:
                     if (c.contains(rPath + ".input") && c.contains(rPath + ".output")) {
-                        req = new InputResultRequirement(type,
-                                c.getString(rPath + ".input"), c.getString(rPath + ".output"));
+                        req = new InputResultRequirement(type, c.getString(rPath + ".input"), c.getString(rPath + ".output"));
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Requirement at path: " + rPath + " does not contain the input: and/or the output: entries"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Requirement at path: " + rPath + " does not contain the input: and/or the output: entries");
                     }
                     break;
                 case HAS_MONEY:
                 case DOES_NOT_HAVE_MONEY:
                     if (c.contains(rPath + ".amount") || c.contains(rPath + ".placeholder")) {
                         invert = type == RequirementType.DOES_NOT_HAVE_MONEY;
-                        req = new HasMoneyRequirement(c.getDouble(rPath + ".amount"), invert,
-                                c.getString(rPath + ".placeholder", null));
+                        req = new HasMoneyRequirement(plugin, c.getDouble(rPath + ".amount"), invert, c.getString(rPath + ".placeholder", null));
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Has Money requirement at path: " + rPath + " does not contain an amount: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Has Money requirement at path: " + rPath + " does not contain an amount: entry");
                     }
                     break;
                 case HAS_EXP:
                 case DOES_NOT_HAVE_EXP:
                     if (c.contains(rPath + ".amount")) {
                         if (!containsPlaceholders(c.getString(rPath + ".amount")) && !c.isInt(rPath + ".amount")) {
-                            DeluxeMenus.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "Value at path: " + rPath + ".amount is not a placeholder or a number"
-                            );
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Value at path: " + rPath + ".amount is not a placeholder or a number");
                             break;
                         }
                         invert = type == RequirementType.DOES_NOT_HAVE_EXP;
-                        req = new HasExpRequirement(c.getString(rPath + ".amount"), invert, c.getBoolean(rPath + ".level"));
+                        req = new HasExpRequirement(plugin, c.getString(rPath + ".amount"), invert, c.getBoolean(rPath + ".level"));
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Has Exp requirement at path: " + rPath + " does not contain an amount: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Has Exp requirement at path: " + rPath + " does not contain an amount: entry");
                     }
                     break;
                 case REGEX_MATCHES:
@@ -1280,14 +1064,9 @@ public class DeluxeMenusConfig {
                     if (c.contains(rPath + ".input") && c.contains(rPath + ".regex")) {
                         Pattern p = Pattern.compile(c.getString(rPath + ".regex"));
                         invert = type == RequirementType.REGEX_DOES_NOT_MATCH;
-                        req = new RegexMatchesRequirement(p,
-                                c.getString(rPath + ".input"), invert);
+                        req = new RegexMatchesRequirement(p, c.getString(rPath + ".input"), invert);
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Regex requirement at path: " + rPath + " does not contain a input: or regex: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Regex requirement at path: " + rPath + " does not contain a input: or regex: entry");
                     }
                     break;
                 case IS_NEAR:
@@ -1296,44 +1075,25 @@ public class DeluxeMenusConfig {
                         invert = type == RequirementType.IS_NOT_NEAR;
                         Location loc = LocationUtils.deserializeLocation(c.getString(rPath + ".location"));
                         if (loc == null) {
-                            DeluxeMenus.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "requirement at path: " + rPath + " has an invalid location. Valid Format is: <world>,<x>,<y>,<z>"
-                            );
+                            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "requirement at path: " + rPath + " has an invalid location. Valid Format is: <world>,<x>,<y>,<z>");
                         }
                         req = new IsNearRequirement(loc, c.getInt(rPath + ".distance"), invert);
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Is Near requirement at path: " + rPath + " does not contain a location: or distance: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Is Near requirement at path: " + rPath + " does not contain a location: or distance: entry");
                     }
                     break;
                 case HAS_META:
                 case DOES_NOT_HAVE_META:
                     if (!VersionHelper.IS_PDC_VERSION) {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Has Meta requirement is not available for your server version!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Has Meta requirement is not available for your server version!");
                         break;
                     }
-                    if (c.contains(rPath + ".key") && c.contains(rPath + ".meta_type") && c
-                            .contains(rPath + ".value")) {
+                    if (c.contains(rPath + ".key") && c.contains(rPath + ".meta_type") && c.contains(rPath + ".value")) {
                         String metaKey = c.getString(rPath + ".key");
                         invert = type == RequirementType.DOES_NOT_HAVE_META;
-                        req = new HasMetaRequirement(metaKey, c.getString(rPath + ".meta_type").toUpperCase(),
-                                c.getString(rPath + ".value"), invert);
+                        req = new HasMetaRequirement(plugin, metaKey, c.getString(rPath + ".meta_type").toUpperCase(), c.getString(rPath + ".value"), invert);
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Has Meta requirement at path: " + rPath
-                                        + " does not contain the key:, meta_type: and/or value: entries!"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Has Meta requirement at path: " + rPath + " does not contain the key:, meta_type: and/or value: entries!");
                     }
                     break;
                 case STRING_LENGTH:
@@ -1345,35 +1105,23 @@ public class DeluxeMenusConfig {
                         }
                         req = new StringLengthRequirement(c.getString(rPath + ".input"), min, max);
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "String length requirement at path: " + rPath + " does not contain an input: or one of (min: or max:)"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "String length requirement at path: " + rPath + " does not contain an input: or one of (min: or max:)");
                     }
                     break;
                 case IS_OBJECT:
                     if (c.contains(rPath + ".input") && c.contains(rPath + ".object")) {
                         req = new IsObjectRequirement(c.getString(rPath + ".input"), c.getString(rPath + ".object"));
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "String length requirement at path: " + rPath + " does not contain an input: or object:"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "String length requirement at path: " + rPath + " does not contain an input: or object:");
                     }
                     break;
 
                 // Custom
                 case COOLDOWN:
                     if (c.contains(rPath + ".time")) {
-                        req = new CooldownRequirement(menuName, c.getInt(rPath + ".time"));
+                        req = new CooldownRequirement(plugin, menuName, c.getInt(rPath + ".time"));
                     } else {
-                        DeluxeMenus.debug(
-                                DebugLevel.HIGHEST,
-                                Level.WARNING,
-                                "Cooldown requirement at path: " + rPath + " does not contain an expression: entry"
-                        );
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Cooldown requirement at path: " + rPath + " does not contain an expression: entry");
                     }
                     break;
 
@@ -1504,15 +1252,7 @@ public class DeluxeMenusConfig {
                             continue;
                         }
 
-                        final ClickActionTask actionTask = new ClickActionTask(
-                                plugin,
-                                holder.getViewer().getUniqueId(),
-                                action.getType(),
-                                action.getExecutable(),
-                                holder.getTypedArgs(),
-                                holder.parsePlaceholdersInArguments(),
-                                holder.parsePlaceholdersAfterArguments()
-                        );
+                        final ClickActionTask actionTask = new ClickActionTask(plugin, holder.getViewer().getUniqueId(), action.getType(), action.getExecutable(), holder.getTypedArgs(), holder.parsePlaceholdersInArguments(), holder.parsePlaceholdersAfterArguments());
 
                         if (action.hasDelay()) {
                             actionTask.runTaskLater(plugin, this, action.getDelay(holder));
@@ -1534,14 +1274,7 @@ public class DeluxeMenusConfig {
                 return;
             }
 
-            DeluxeMenus.debug(
-                DebugLevel.HIGHEST,
-                Level.WARNING,
-                String.format(
-                    "Option '%s' of item '%s' in menu '%s' is deprecated and will be removed in the future. Replace it with item_flags: [%s].",
-                    option, config.getName(), menuName, itemFlag
-                )
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, String.format("Option '%s' of item '%s' in menu '%s' is deprecated and will be removed in the future. Replace it with item_flags: [%s].", option, config.getName(), menuName, itemFlag));
         };
 
         oldItemFlagOptionCheck.accept("hide_attributes", ItemFlag.HIDE_ATTRIBUTES);
@@ -1550,7 +1283,7 @@ public class DeluxeMenusConfig {
     }
 
     public void debug(String... messages) {
-        DeluxeMenus.debug(DebugLevel.LOWEST, Level.INFO, messages);
+        plugin.debug(DebugLevel.LOWEST, Level.INFO, messages);
     }
 
     public @NotNull DebugLevel debugLevel() {
@@ -1571,7 +1304,6 @@ public class DeluxeMenusConfig {
     public File getMenuDirector() {
         return menuDirectory;
     }
-
     public void addEnchantmentsOptionToBuilder(final FileConfiguration c, final String currentPath,
                                                final String itemKey, final String menuName,
                                                final MenuItemOptions.MenuItemOptionsBuilder builder) {
@@ -1584,7 +1316,7 @@ public class DeluxeMenusConfig {
 
         for (final String configEnchantment : configEnchantments) {
             if (configEnchantment == null || !configEnchantment.contains(";")) {
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Enchantment format '" + configEnchantment + "' is incorrect for item " + itemKey +
@@ -1596,7 +1328,7 @@ public class DeluxeMenusConfig {
 
             String[] parts = configEnchantment.split(";", 2);
             if (parts.length != 2 || parts[0] == null || parts[1] == null) {
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Enchantment format '" + configEnchantment + "' is incorrect for item " + itemKey +
@@ -1610,7 +1342,7 @@ public class DeluxeMenusConfig {
             final Enchantment enchantment = xEnchantment == null ? null : xEnchantment.getEnchant();
 
             if (enchantment == null) {
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Enchantment '" + parts[0].strip() + "' for item " + itemKey +
@@ -1621,7 +1353,7 @@ public class DeluxeMenusConfig {
             Integer level = Ints.tryParse(parts[1].strip());
             if (level == null) {
                 level = 1;
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Enchantment level '" + parts[1].strip() + "' is incorrect for item " + itemKey +
@@ -1633,8 +1365,8 @@ public class DeluxeMenusConfig {
         builder.enchantments(parsedEnchantments);
     }
 
-    public void addDamageOptionToBuilder(FileConfiguration c, String currentPath, String itemKey, String menuName,
-                                         MenuItemOptions.MenuItemOptionsBuilder builder) {
+    public void addDamageOptionToBuilder(final FileConfiguration c, final String currentPath, final String itemKey,
+                                         final String menuName, final MenuItemOptions.MenuItemOptionsBuilder builder) {
         boolean damageOptionIsPresent = false;
         String damageValue = null;
 
@@ -1647,20 +1379,10 @@ public class DeluxeMenusConfig {
         key = "data";
         if (c.contains(currentPath + key)) {
             if (!damageOptionIsPresent) {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "Found 'data' option for item: " + itemKey + " in menu: " + menuName+ ". This option " +
-                                "is deprecated and will be removed soon. Please use 'damage' instead."
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Found 'data' option for item: " + itemKey + " in menu: " + menuName + ". This option " + "is deprecated and will be removed soon. Please use 'damage' instead.");
                 damageValue = c.getString(currentPath + key, "");
             } else {
-                DeluxeMenus.debug(
-                        DebugLevel.HIGHEST,
-                        Level.WARNING,
-                        "Found 'data' and 'damage' options for item: " + itemKey + " in menu: " + menuName +
-                                ". 'data' option is deprecated and will be ignored. Using 'damage' instead."
-                );
+                plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Found 'data' and 'damage' options for item: " + itemKey + " in menu: " + menuName + ". 'data' option is deprecated and will be ignored. Using 'damage' instead.");
             }
         }
 
@@ -1673,28 +1395,13 @@ public class DeluxeMenusConfig {
         }
 
         if (!ItemUtils.isPlaceholderOption(damageValue) && Ints.tryParse(damageValue) == null) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.WARNING,
-                    "Found invalid value for '" + key + "' option for item: " + itemKey + " in menu: " +
-                            menuName + ".",
-                    "The correct formats for '" + key + "' are:",
-                    "  -> <number>",
-                    "  -> placeholder-<placeholder>",
-                    "Ignoring the invalid value."
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Found invalid value for '" + key + "' option for item: " + itemKey + " in menu: " + menuName + ".", "The correct formats for '" + key + "' are:", "  -> <number>", "  -> placeholder-<placeholder>", "Ignoring the invalid value.");
             return;
         }
 
         final String[] parts = damageValue.split("-", 2);
         if (parts.length >= 2 && !containsPlaceholders(parts[1])) {
-            DeluxeMenus.debug(
-                    DebugLevel.HIGHEST,
-                    Level.WARNING,
-                    "Could not find placeholder for '" + key + "' option for item: " + itemKey + " in menu: " +
-                            menuName + ".",
-                    "Ignoring the invalid value."
-            );
+            plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Could not find placeholder for '" + key + "' option for item: " + itemKey + " in menu: " + menuName + ".", "Ignoring the invalid value.");
             return;
         }
 

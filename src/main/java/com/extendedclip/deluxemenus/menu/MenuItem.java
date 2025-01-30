@@ -1,6 +1,5 @@
 package com.extendedclip.deluxemenus.menu;
 
-import com.cryptomorin.xseries.XMaterial;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.hooks.ItemHook;
 import com.extendedclip.deluxemenus.menu.options.HeadType;
@@ -23,14 +22,29 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.*;
+import org.bukkit.inventory.meta.ArmorMeta;
+import org.bukkit.inventory.meta.BannerMeta;
+import org.bukkit.inventory.meta.BlockDataMeta;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.FireworkEffectMeta;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -39,9 +53,11 @@ import static com.extendedclip.deluxemenus.utils.Constants.PLACEHOLDER_PREFIX;
 
 public class MenuItem {
 
-    private final @NotNull MenuItemOptions options;
+    private final DeluxeMenus plugin;
+    private final MenuItemOptions options;
 
-    public MenuItem(@NotNull final MenuItemOptions options) {
+    public MenuItem(@NotNull final DeluxeMenus plugin, @NotNull final MenuItemOptions options) {
+        this.plugin = plugin;
         this.options = options;
     }
 
@@ -73,7 +89,7 @@ public class MenuItem {
         final int temporaryAmount = amount;
 
         final String finalMaterial = lowercaseStringMaterial;
-        final ItemHook pluginHook = DeluxeMenus.getInstance().getItemHooks().values()
+        final ItemHook pluginHook = plugin.getItemHooks().values()
             .stream()
             .filter(x -> finalMaterial.startsWith(x.getPrefix()))
             .findFirst()
@@ -89,10 +105,9 @@ public class MenuItem {
 
         // The item is neither a water bottle nor plugin hook item
         if (itemStack == null) {
-            final XMaterial xMaterial = XMaterial.matchXMaterial(stringMaterial.toUpperCase(Locale.ROOT)).orElse(null);
-            final Material material = xMaterial == null ? null : xMaterial.parseMaterial();
+            final Material material = Material.getMaterial(stringMaterial.toUpperCase(Locale.ROOT));
             if (material == null) {
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Material: " + stringMaterial + " is not valid! Setting to Stone."
@@ -106,9 +121,6 @@ public class MenuItem {
         if (ItemUtils.isBanner(itemStack.getType())) {
             final BannerMeta meta = (BannerMeta) itemStack.getItemMeta();
             if (meta != null) {
-                if (this.options.baseColor().isPresent()) {
-                    meta.setBaseColor(this.options.baseColor().get());
-                }
                 if (!this.options.bannerMeta().isEmpty()) {
                     meta.setPatterns(this.options.bannerMeta());
                 }
@@ -177,7 +189,7 @@ public class MenuItem {
                     }
                 }
             } catch (final NumberFormatException exception) {
-                DeluxeMenus.printStacktrace(
+                plugin.printStacktrace(
                         "Invalid damage found: " + parsedDamage + ".",
                         exception
                 );
@@ -253,24 +265,20 @@ public class MenuItem {
         if (VersionHelper.HAS_DATA_COMPONENTS) {
             if (this.options.hideTooltip().isPresent()) {
                 String hideTooltip = holder.setPlaceholdersAndArguments(this.options.hideTooltip().get());
-
                 try {
                     itemMeta.getClass().getMethod("setHideTooltip", boolean.class).invoke(itemMeta, Boolean.parseBoolean(hideTooltip));
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
             }
-
             if (this.options.enchantmentGlintOverride().isPresent()) {
                 String enchantmentGlintOverride = holder.setPlaceholdersAndArguments(this.options.enchantmentGlintOverride().get());
-
                 try {
                     itemMeta.getClass().getMethod("setEnchantmentGlintOverride", boolean.class).invoke(itemMeta, Boolean.parseBoolean(enchantmentGlintOverride));
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
             }
-
             if (this.options.rarity().isPresent()) {
                 String rarity = holder.setPlaceholdersAndArguments(this.options.rarity().get());
 
@@ -279,7 +287,7 @@ public class MenuItem {
                     Class<Enum> enumClass = (Class<Enum>) Class.forName("org.bukkit.inventory.ItemRarity");
                     itemMeta.getClass().getMethod("setRarity", enumClass).invoke(itemMeta, Enum.valueOf(enumClass, rarity.toUpperCase()));
                 } catch (IllegalArgumentException e) {
-                    DeluxeMenus.debug(
+                    plugin.debug(
                             DebugLevel.HIGHEST,
                             Level.WARNING,
                             "Rarity " + rarity + " is not a valid!"
@@ -292,7 +300,6 @@ public class MenuItem {
         if (VersionHelper.HAS_TOOLTIP_STYLE) {
             if (this.options.tooltipStyle().isPresent()) {
                 NamespacedKey tooltipStyle = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.tooltipStyle().get()));
-
                 if (tooltipStyle != null) {
                     try {
                         itemMeta.getClass().getMethod("setTooltipStyle", NamespacedKey.class).invoke(itemMeta, tooltipStyle);
@@ -301,10 +308,8 @@ public class MenuItem {
                     }
                 }
             }
-
             if (this.options.itemModel().isPresent()) {
                 NamespacedKey itemModel = NamespacedKey.fromString(holder.setPlaceholdersAndArguments(this.options.itemModel().get()));
-
                 if (itemModel != null) {
                     try {
                         itemMeta.getClass().getMethod("setItemModel", NamespacedKey.class).invoke(itemMeta, itemModel);
@@ -330,7 +335,7 @@ public class MenuItem {
                     itemStack.setItemMeta(armorMeta);
                 } else {
                     if (trimMaterial == null) {
-                        DeluxeMenus.debug(
+                        plugin.debug(
                                 DebugLevel.HIGHEST,
                                 Level.WARNING,
                                 "Trim material " + trimMaterialName.get() + " is not a valid!"
@@ -338,7 +343,7 @@ public class MenuItem {
                     }
 
                     if (trimPattern == null) {
-                        DeluxeMenus.debug(
+                        plugin.debug(
                                 DebugLevel.HIGHEST,
                                 Level.WARNING,
                                 "Trim pattern " + trimPatternName.get() + " is not a valid!"
@@ -346,13 +351,13 @@ public class MenuItem {
                     }
                 }
             } else if (trimMaterialName.isPresent()) {
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Trim pattern is not set for item with trim material " + trimMaterialName.get()
                 );
             } else if (trimPatternName.isPresent()) {
-                DeluxeMenus.debug(
+                plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
                         "Trim material is not set for item with trim pattern " + trimPatternName.get()
@@ -370,7 +375,7 @@ public class MenuItem {
                         Integer.parseInt(parts[2].trim())));
                 itemStack.setItemMeta(leatherArmorMeta);
             } catch (final Exception exception) {
-                DeluxeMenus.printStacktrace(
+                plugin.printStacktrace(
                         "Invalid rgb colors found for leather armor: " + parts[0].trim() + ", " + parts[1].trim() + ", " +
                                 parts[2].trim(),
                         exception
@@ -386,7 +391,7 @@ public class MenuItem {
                         Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()))).build());
                 itemStack.setItemMeta(fireworkEffectMeta);
             } catch (final Exception exception) {
-                DeluxeMenus.printStacktrace(
+                plugin.printStacktrace(
                         "Invalid rgb colors found for firework or firework star: " + parts[0].trim() + ", "
                                 + parts[1].trim() + ", " + parts[2].trim(),
                         exception
@@ -397,7 +402,7 @@ public class MenuItem {
             for (final Map.Entry<Enchantment, Integer> entry : this.options.enchantments().entrySet()) {
                 final boolean result = enchantmentStorageMeta.addStoredEnchant(entry.getKey(), entry.getValue(), true);
                 if (!result) {
-                    DeluxeMenus.debug(
+                    plugin.debug(
                             DebugLevel.HIGHEST,
                             Level.INFO,
                             "Failed to add enchantment " + entry.getKey().getName() + " to item " + itemStack.getType()
@@ -423,14 +428,14 @@ public class MenuItem {
                     final int lightLevel = Math.min(Integer.parseInt(parsedLightLevel), light.getMaximumLevel());
                     light.setLevel(Math.max(lightLevel, 0));
                     if (lightLevel < 0) {
-                        DeluxeMenus.debug(
+                        plugin.debug(
                                 DebugLevel.MEDIUM,
                                 Level.WARNING,
                                 "Invalid light level found for light block: " + parsedLightLevel + ". Setting to 0."
                         );
                     }
                     if (lightLevel > light.getMaximumLevel()) {
-                        DeluxeMenus.debug(
+                        plugin.debug(
                                 DebugLevel.MEDIUM,
                                 Level.WARNING,
                                 "Invalid light level found for light block: " + parsedLightLevel + ". Setting to " + light.getMaximumLevel() + "."
@@ -440,7 +445,7 @@ public class MenuItem {
                     blockDataMeta.setBlockData(light);
                     itemStack.setItemMeta(blockDataMeta);
                 } catch (final Exception exception) {
-                    DeluxeMenus.printStacktrace(
+                    plugin.printStacktrace(
                             "Invalid light level found for light block: " + parsedLightLevel,
                             exception
                     );
@@ -549,9 +554,7 @@ public class MenuItem {
     }
 
     private @NotNull Optional<ItemStack> getItemFromHook(String hookName, String... args) {
-        return DeluxeMenus.getInstance()
-                .getItemHook(hookName)
-                .map(itemHook -> itemHook.getItem(args));
+        return plugin.getItemHook(hookName).map(itemHook -> itemHook.getItem(args));
     }
 
     private List<String> getMenuItemLore(@NotNull final MenuHolder holder, @NotNull final List<String> lore) {

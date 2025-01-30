@@ -2,7 +2,6 @@ package com.extendedclip.deluxemenus.utils;
 
 import com.cryptomorin.xseries.XSound;
 import org.bukkit.Sound;
-import java.lang.reflect.Method;
 
 public class SoundUtils {
 
@@ -17,6 +16,6 @@ public class SoundUtils {
             return Sound.valueOf(name);
         } */
 
-        return XSound.matchXSound(executable.toUpperCase()).orElseThrow().parseSound();
+        return XSound.matchXSound(name.toUpperCase()).orElseThrow().parseSound();
     }
 }

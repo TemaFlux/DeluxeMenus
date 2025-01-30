@@ -21,10 +21,10 @@ extends Requirement {
     private final int time;
     private final Map<UUID, Long> expiredMap = new HashMap<>();
 
-    public CooldownRequirement(String menuName, int time) {
+    public CooldownRequirement(DeluxeMenus plugin, String menuName, int time) {
         this.time = time;
 
-        Path dataFolder = DeluxeMenus.getInstance().getDataFolder().toPath();
+        Path dataFolder = plugin.getDataFolder().toPath();
         coolDownFolder = dataFolder.resolve(CACHE_FOLDER.resolve(menuName));
     }
 
