@@ -165,7 +165,6 @@ public class HasItemRequirement extends Requirement {
   }
 
   private boolean removeItems(MenuHolder holder, Material material, ItemHook pluginHook) {
-    System.out.println("asdasd");
     if (!remove) return true;
 
     ItemStack[] armor = wrapper.checkArmor() ? holder.getViewer().getInventory().getArmorContents() : null;
