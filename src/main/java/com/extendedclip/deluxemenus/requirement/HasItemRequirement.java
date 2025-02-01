@@ -165,16 +165,21 @@ public class HasItemRequirement extends Requirement {
   }
 
   private boolean removeItems(MenuHolder holder, Material material, ItemHook pluginHook) {
+    System.out.println("asdasd");
+    if (!remove) return true;
+
     ItemStack[] armor = wrapper.checkArmor() ? holder.getViewer().getInventory().getArmorContents() : null;
     ItemStack[] offHand = wrapper.checkOffhand() ? holder.getViewer().getInventory().getExtraContents() : null;
     ItemStack[] inventory = holder.getViewer().getInventory().getStorageContents();
 
     int amountToRemove = wrapper.getAmount();
+    boolean removeAll = amountToRemove == -1;
+    boolean hasRemoved = false;
 
     for (ItemStack item : inventory) {
       if (isRequiredItem(item, holder, material, pluginHook)) {
         int itemAmount = item.getAmount();
-        int needRemove = amountToRemove == -1 ? itemAmount : amountToRemove;
+        int needRemove = removeAll ? itemAmount : amountToRemove;
 
         if (itemAmount <= needRemove) {
           holder.getViewer().getInventory().removeItem(item);
@@ -184,16 +189,20 @@ public class HasItemRequirement extends Requirement {
           needRemove = 0;
         }
 
-        if (amountToRemove != -1) amountToRemove = needRemove;
-        if (amountToRemove <= 0) break;
+        if (itemAmount > 0) {
+          hasRemoved = true;
+        }
+
+        if (!removeAll) amountToRemove = needRemove;
+        if (!removeAll && amountToRemove <= 0) break;
       }
     }
 
-    if (offHand != null && (amountToRemove == -1 || amountToRemove > 0)) {
+    if (offHand != null && (removeAll || amountToRemove > 0)) {
       for (ItemStack item : offHand) {
         if (isRequiredItem(item, holder, material, pluginHook)) {
           int itemAmount = item.getAmount();
-          int needRemove = amountToRemove == -1 ? itemAmount : amountToRemove;
+          int needRemove = removeAll ? itemAmount : amountToRemove;
 
           if (itemAmount <= amountToRemove) {
             holder.getViewer().getInventory().removeItem(item);
@@ -203,17 +212,21 @@ public class HasItemRequirement extends Requirement {
             needRemove = 0;
           }
 
-          if (amountToRemove != -1) amountToRemove = needRemove;
-          if (needRemove <= 0) break;
+          if (itemAmount > 0) {
+            hasRemoved = true;
+          }
+
+          if (!removeAll) amountToRemove = needRemove;
+          if (!removeAll && needRemove <= 0) break;
         }
       }
     }
 
-    if (armor != null && (amountToRemove == -1 || amountToRemove > 0)) {
+    if (armor != null && (removeAll || amountToRemove > 0)) {
       for (ItemStack item : armor) {
         if (isRequiredItem(item, holder, material, pluginHook)) {
           int itemAmount = item.getAmount();
-          int needRemove = amountToRemove == -1 ? itemAmount : amountToRemove;
+          int needRemove = removeAll ? itemAmount : amountToRemove;
 
           if (itemAmount <= needRemove) {
             holder.getViewer().getInventory().removeItem(item);
@@ -223,12 +236,16 @@ public class HasItemRequirement extends Requirement {
             needRemove = 0;
           }
 
-          if (amountToRemove != -1) amountToRemove = needRemove;
-          if (amountToRemove <= 0) break;
+          if (itemAmount > 0) {
+            hasRemoved = true;
+          }
+
+          if (!removeAll) amountToRemove = needRemove;
+          if (!removeAll && amountToRemove <= 0) break;
         }
       }
     }
 
-    return amountToRemove == 0 || amountToRemove == -1;
+    return amountToRemove == 0 || removeAll && hasRemoved;
   }
 }
