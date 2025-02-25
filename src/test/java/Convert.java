@@ -1,6 +1,5 @@
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Convert {
-    private static final String[] CHARS = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9".split(" ");
-
     public static void main(String[] args) throws Throwable {
         convertAll("input", "output_" + System.currentTimeMillis());
     }
@@ -32,7 +29,7 @@ public class Convert {
             throw new IOException("Failed create directory: " + inputFolderPath);
         }
 
-        List<File> files = collectYmlFiles(inputFolder);
+        List<File> files = FileUtil.collectYmlFiles(inputFolder);
         if (files.isEmpty()) {
             throw new IOException("Failed to list files in directory: " + inputFolderPath);
         }
@@ -43,27 +40,11 @@ public class Convert {
         }
     }
 
-    private static List<File> collectYmlFiles(File directory) {
-        List<File> ymlFiles = new ArrayList<>();
-        if (directory.isDirectory()) collectYmlFilesRecursively(directory, ymlFiles);
-        return ymlFiles;
-    }
-
-    private static void collectYmlFilesRecursively(@NotNull File directory, List<File> ymlFiles) {
-        File[] files = directory.listFiles();
-
-        if (files != null) for (File file : files) {
-            if (file.isDirectory()) collectYmlFilesRecursively(file, ymlFiles);
-            else if (file.getName().endsWith(".yml")) ymlFiles.add(file);
-        }
-    }
-
     public static void convert(String filePath, String outPath) throws Throwable {
-        YamlConfiguration configuration = new YamlConfiguration();
-        configuration.load(new File(filePath));
+        YamlConfiguration configuration = FileUtil.loadYaml(new File(filePath));
 
         boolean hasPattern = configuration.contains("pattern") && configuration.isList("pattern");
-        int rows = 0;
+        int rows;
 
         if (hasPattern) {
             rows = configuration.getStringList("pattern").size();
@@ -81,7 +62,7 @@ public class Convert {
                 if (section == null) continue;
 
                 if (!hasPattern) {
-                    String key = CHARS[items.size()];
+                    String key = StringUtil.CHARS[items.size()];
                     List<Integer> slots = new ArrayList<>();
 
                     if (section.contains("slot")) slots.add(section.getInt("slot"));
