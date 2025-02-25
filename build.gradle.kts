@@ -43,10 +43,17 @@ dependencies {
     implementation(libs.adventure.minimessage)
     implementation(libs.xseries) { isTransitive = false }
 
-    compileOnly("org.jetbrains:annotations:23.0.0")
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
 
+    compileOnly("org.jetbrains:annotations:23.0.0")
     compileOnly(project(":abstract-api"))
+
     testImplementation(files("libs/BukkitConfiguration-1.0-SNAPSHOT.jar"))
+    testImplementation(libs.xseries) { isTransitive = false }
+
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
 }
 
 tasks {
