@@ -49,6 +49,7 @@ dependencies {
     compileOnly("org.jetbrains:annotations:23.0.0")
     compileOnly(project(":abstract-api"))
 
+    testImplementation(libs.paper)
     testImplementation(files("libs/BukkitConfiguration-1.0-SNAPSHOT.jar"))
     testImplementation(libs.xseries) { isTransitive = false }
 
