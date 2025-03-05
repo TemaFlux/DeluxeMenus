@@ -97,7 +97,10 @@ public class MenuItem {
             .orElse(null);
 
         if (pluginHook != null) {
-            itemStack = pluginHook.getItem(holder.setPlaceholdersAndArguments(stringMaterial.substring(pluginHook.getPrefix().length())));
+            itemStack = pluginHook.getItem(
+                    viewer,
+                    holder.setPlaceholdersAndArguments(stringMaterial.substring(pluginHook.getPrefix().length()))
+            );
         }
 
         if (ItemUtils.isWaterBottle(stringMaterial)) {
