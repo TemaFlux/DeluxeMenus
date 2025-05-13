@@ -1,6 +1,8 @@
 package com.extendedclip.deluxemenus.utils;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -20,6 +22,16 @@ public class SchedulerUtil {
 
     public static Task runTask(Plugin plugin, Object handle, Runnable action) {
         if (plugin == null || action == null) return null;
+
+        if (Bukkit.isPrimaryThread()) {
+            try {
+                action.run();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+
+            return Task.EMPTY;
+        }
 
         Object handleTask = null;
 
@@ -147,12 +159,11 @@ public class SchedulerUtil {
         return entities == null || entities.isEmpty() ? null : entities.get(0);
     }
 
+    @Getter
+    @RequiredArgsConstructor
     public static class Task {
+        public static final Task EMPTY = new Task(null);
         private final Object handle;
-
-        public Task(Object handle) {
-            this.handle = handle;
-        }
 
         public void cancel() {
             if (handle == null) return;
@@ -182,8 +193,5 @@ public class SchedulerUtil {
             return false;
         }
 
-        public Object getHandle() {
-            return handle;
-        }
     }
 }
