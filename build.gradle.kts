@@ -19,6 +19,7 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.glaremasters.me/repository/public/")
     maven("https://nexus.phoenixdevt.fr/repository/maven-public/")
+    maven("https://repo.nexomc.com/releases/")
     maven("https://repo.oraxen.com/releases")
     maven("https://jitpack.io")
 }
@@ -31,6 +32,7 @@ dependencies {
 
     compileOnly(libs.headdb)
     compileOnly(libs.itemsadder)
+    compileOnly(libs.nexo)
     compileOnly(libs.oraxen)
     compileOnly(libs.mythiclib)
     compileOnly(libs.mmoitems)
@@ -68,7 +70,8 @@ tasks {
     }
     java {
         sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_11
+        disableAutoTargetJvm()
     }
 
     processResources {
