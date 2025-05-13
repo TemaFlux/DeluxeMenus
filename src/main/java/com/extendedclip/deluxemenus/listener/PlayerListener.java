@@ -227,7 +227,7 @@ public class PlayerListener extends Listener {
             }
         }
 
-        giveItem.accept(null);
+        // giveItem.accept(null);
     }
 
     /**
