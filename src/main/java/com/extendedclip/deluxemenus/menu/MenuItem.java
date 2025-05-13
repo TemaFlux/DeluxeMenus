@@ -404,12 +404,12 @@ public class MenuItem {
         } else if (itemMeta instanceof EnchantmentStorageMeta && !this.options.enchantments().isEmpty()) {
             final EnchantmentStorageMeta enchantmentStorageMeta = (EnchantmentStorageMeta) itemMeta;
             for (final Map.Entry<Enchantment, Integer> entry : this.options.enchantments().entrySet()) {
-                final boolean result = enchantmentStorageMeta.addStoredEnchant(entry.getKey(), entry.getValue(), true);
+                final boolean result = entry.getKey() != null && enchantmentStorageMeta.addStoredEnchant(entry.getKey(), entry.getValue(), true);
                 if (!result) {
                     plugin.debug(
                             DebugLevel.HIGHEST,
                             Level.INFO,
-                            "Failed to add enchantment " + entry.getKey().getName() + " to item " + itemStack.getType()
+                            "Failed to add enchantment " + (entry.getKey() == null ? "null" : entry.getKey().getName()) + " to item " + itemStack.getType()
                     );
                 }
             }
@@ -565,10 +565,7 @@ public class MenuItem {
         return lore.stream()
                 .map(holder::setPlaceholdersAndArguments)
                 .map(StringUtils::color)
-                .map(line -> line.split("\n"))
-                .flatMap(Arrays::stream)
-                .map(line -> line.split("\\\\n"))
-                .flatMap(Arrays::stream)
+                .flatMap(line -> Arrays.stream(line.replace("\\n", "\n").split("\n")))
                 .collect(Collectors.toList());
     }
 
