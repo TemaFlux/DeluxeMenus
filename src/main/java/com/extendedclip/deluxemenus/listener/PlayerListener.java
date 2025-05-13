@@ -10,7 +10,6 @@ import com.extendedclip.deluxemenus.requirement.RequirementList;
 import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -157,10 +156,6 @@ public class PlayerListener extends Listener {
             this.shiftCache.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
-        if (handleClick(player, holder, item.options().clickHandler(), item.options().clickRequirements())) {
-            return;
-        }
-
         Consumer<Optional<RequirementList>> giveItem = requirements -> {
             if (!item.options().giveItem()) return;
 
@@ -192,37 +187,42 @@ public class PlayerListener extends Listener {
             }
         };
 
+        if (handleClick(player, holder, item.options().clickHandler(), item.options().clickRequirements())) {
+            giveItem.accept(item.options().clickRequirements());
+            return;
+        }
+
         if (event.isShiftClick() && event.isLeftClick()) {
             if (handleClick(player, holder, item.options().shiftLeftClickHandler(), item.options().shiftLeftClickRequirements())) {
-                giveItem.accept(item.options().clickRequirements());
+                giveItem.accept(item.options().shiftLeftClickRequirements());
                 return;
             }
         }
 
         if (event.isShiftClick() && event.isRightClick()) {
             if (handleClick(player, holder, item.options().shiftRightClickHandler(), item.options().shiftRightClickRequirements())) {
-                giveItem.accept(item.options().clickRequirements());
+                giveItem.accept(item.options().shiftRightClickRequirements());
                 return;
             }
         }
 
         if (event.getClick() == ClickType.LEFT) {
             if (handleClick(player, holder, item.options().leftClickHandler(), item.options().leftClickRequirements())) {
-                giveItem.accept(item.options().clickRequirements());
+                giveItem.accept(item.options().leftClickRequirements());
                 return;
             }
         }
 
         if (event.getClick() == ClickType.RIGHT) {
             if (handleClick(player, holder, item.options().rightClickHandler(), item.options().rightClickRequirements())) {
-                giveItem.accept(item.options().clickRequirements());
+                giveItem.accept(item.options().rightClickRequirements());
                 return;
             }
         }
 
         if (event.getClick() == ClickType.MIDDLE) {
             if (handleClick(player, holder, item.options().middleClickHandler(), item.options().middleClickRequirements())) {
-                giveItem.accept(item.options().clickRequirements());
+                giveItem.accept(item.options().middleClickRequirements());
                 return;
             }
         }
