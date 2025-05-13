@@ -5,23 +5,14 @@ import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.extendedclip.deluxemenus.utils.StringUtils;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MenuHolder implements InventoryHolder {
 
@@ -179,30 +170,34 @@ public class MenuHolder implements InventoryHolder {
                 Menu.closeMenu(plugin, getViewer(), true);
             }
 
+            boolean update = false;
+            Map<Integer, ItemStack> itemStacks = new HashMap<>(active.size() - 1);
+
+            for (MenuItem item : active) {
+                ItemStack iStack = item.getItemStack(this);
+
+                int slot = item.options().slot();
+
+                if (slot >= menu.options().size()) {
+                    continue;
+                }
+
+                if (item.options().updatePlaceholders()) {
+                    update = true;
+                }
+
+                itemStacks.put(slot, iStack);
+            }
+
+            final boolean needPlaceholderTask = update;
             SchedulerUtil.runTask(plugin, getViewer(), () -> {
-
-                boolean update = false;
-
-                for (MenuItem item : active) {
-
-                    ItemStack iStack = item.getItemStack(this);
-
-                    int slot = item.options().slot();
-
-                    if (slot >= menu.options().size()) {
-                        continue;
-                    }
-
-                    if (item.options().updatePlaceholders()) {
-                        update = true;
-                    }
-
-                    getInventory().setItem(item.options().slot(), iStack);
+                for (Map.Entry<Integer, ItemStack> entry : itemStacks.entrySet()) {
+                    getInventory().setItem(entry.getKey(), entry.getValue());
                 }
 
                 setActiveItems(active);
 
-                if (update) {
+                if (needPlaceholderTask) {
                     startUpdatePlaceholdersTask();
                 }
 
