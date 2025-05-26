@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.nashorn)
     implementation(libs.adventure.platform)
     implementation(libs.adventure.minimessage)
+    // implementation(libs.bstats)
     implementation(libs.xseries) { isTransitive = false }
 
     compileOnly(libs.lombok)
@@ -65,6 +66,7 @@ tasks {
         relocate("org.objectweb.asm", "com.extendedclip.deluxemenus.libs.asm")
         relocate("org.openjdk.nashorn", "com.extendedclip.deluxemenus.libs.nashorn")
         relocate("net.kyori", "com.extendedclip.deluxemenus.libs.adventure")
+        relocate("org.bstats", "com.extendedclip.deluxemenus.libs.bstats")
         relocate("com.cryptomorin.xseries", "com.extendedclip.deluxemenus.libs.xseries")
         archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
     }

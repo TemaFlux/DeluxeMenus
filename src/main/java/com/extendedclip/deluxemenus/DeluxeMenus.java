@@ -319,6 +319,34 @@ public class DeluxeMenus extends JavaPlugin {
     }
 
     private void setUpMetrics() {
-        // final Metrics metrics = new Metrics(this, 445);
+        /*
+        final Metrics metrics = new Metrics(this, 445);
+        metrics.addCustomChart(new SingleLineChart("menus", Menu::getLoadedMenuSize));
+
+        metrics.addCustomChart(new AdvancedPie("inventory_types", () -> Menu.getAllMenus().stream()
+                .map(Menu::options)
+                .map(MenuOptions::type)
+                .collect(Collectors.groupingBy(Enum::name, Collectors.summingInt(type -> 1)))));
+
+        // added for 1.21 usage
+        metrics.addCustomChart(new AdvancedPie("nbt_usage", () -> {
+            final var results = new HashMap<String, Integer>();
+            final var options = Menu.getAllMenus().stream()
+                    .map(Menu::getMenuItems)
+                    .flatMap(c -> c.values().stream().map(TreeMap::values).flatMap(Collection::stream))
+                    .map(MenuItem::options)
+                    .collect(Collectors.toList());
+            results.put("Byte", options.stream().filter(option -> option.nbtByte().isPresent()).mapToInt(b -> 1).sum());
+            results.put("Bytes", options.stream().filter(option -> !option.nbtBytes().isEmpty()).mapToInt(b -> 1).sum());
+            results.put("Short", options.stream().filter(option -> option.nbtShort().isPresent()).mapToInt(s -> 1).sum());
+            results.put("Shorts", options.stream().filter(option -> !option.nbtShorts().isEmpty()).mapToInt(s -> 1).sum());
+            results.put("Int", options.stream().filter(option -> option.nbtInt().isPresent()).mapToInt(i -> 1).sum());
+            results.put("Ints", options.stream().filter(option -> !option.nbtInts().isEmpty()).mapToInt(i -> 1).sum());
+            results.put("String", options.stream().filter(option -> option.nbtString().isPresent()).mapToInt(s -> 1).sum());
+            results.put("Strings", options.stream().filter(option -> !option.nbtStrings().isEmpty()).mapToInt(s -> 1).sum());
+            results.put("Model Data", options.stream().filter(option -> option.customModelData().isPresent()).mapToInt(c -> 1).sum());
+            return results;
+        }));
+        */
     }
 }
