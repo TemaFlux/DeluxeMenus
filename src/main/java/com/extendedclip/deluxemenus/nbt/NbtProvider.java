@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class NbtProvider {
-    // Currently need rewrite a code for >= 1.21 versions, this system updated on this version
+
     private static boolean NBT_HOOKED;
 
     private static Method getStringMethod;
@@ -123,20 +123,26 @@ public final class NbtProvider {
     public static ItemStack setByte(final ItemStack itemStack, final String key, final byte value) {
         if (itemStack == null) return null;
         if (itemStack.getType() == Material.AIR) return null;
+
         Object nmsItemStack = asNMSCopy(itemStack);
         Object itemCompound = hasTag(nmsItemStack) ? getTag(nmsItemStack) : newNBTTagCompound();
+
         setByte(itemCompound, key, value);
         setTag(nmsItemStack, itemCompound);
+
         return asBukkitCopy(nmsItemStack);
     }
 
     public static ItemStack setShort(final ItemStack itemStack, final String key, final short value) {
         if (itemStack == null) return null;
         if (itemStack.getType() == Material.AIR) return null;
+
         Object nmsItemStack = asNMSCopy(itemStack);
         Object itemCompound = hasTag(nmsItemStack) ? getTag(nmsItemStack) : newNBTTagCompound();
+
         setShort(itemCompound, key, value);
         setTag(nmsItemStack, itemCompound);
+
         return asBukkitCopy(nmsItemStack);
     }
 

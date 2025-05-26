@@ -385,7 +385,6 @@ public class DeluxeMenusConfig {
     }
 
     public void loadMenu(FileConfiguration c, String key, boolean mainConfig, final @NotNull String path) {
-
         if (mainConfig) {
             plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Menu: " + key + " does not have a file specified in config.yml! Creating menus in the " + "config.yml file is deprecated and will be removed in a future version! Please migrate your " + "menus to individual files in the gui_menus directory! For more information see: " + "https://wiki.helpch.at/clips-plugins/deluxemenus/external-menus");
         }

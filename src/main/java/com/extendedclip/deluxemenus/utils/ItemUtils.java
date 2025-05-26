@@ -26,7 +26,7 @@ public final class ItemUtils {
      * @return true if the string starts with "placeholder-", false otherwise
      */
     public static boolean isPlaceholderOption(@NotNull final String material) {
-        return material.startsWith(PLACEHOLDER_PREFIX);
+        return material.toLowerCase(Locale.ROOT).startsWith(PLACEHOLDER_PREFIX);
     }
 
     /**
