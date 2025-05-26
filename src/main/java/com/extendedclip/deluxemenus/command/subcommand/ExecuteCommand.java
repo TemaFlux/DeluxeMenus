@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class ExecuteCommand extends SubCommand {
 
@@ -133,23 +132,6 @@ public class ExecuteCommand extends SubCommand {
             return null;
         }
 
-        final List<String> onlinePlayerNames = Bukkit.getOnlinePlayers()
-                .stream()
-                .map(Player::getName)
-                .collect(Collectors.toList());
-
-        if (onlinePlayerNames.isEmpty()) {
-            return null;
-        }
-
-        final String secondArgument = arguments.get(1).toLowerCase();
-
-        if (secondArgument.isEmpty()) {
-            return onlinePlayerNames;
-        }
-
-        return onlinePlayerNames.stream()
-                .filter(playerName -> playerName.toLowerCase().startsWith(secondArgument))
-                .collect(Collectors.toList());
+        return getPlayerNameCompletion(arguments.get(1));
     }
 }
