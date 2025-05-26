@@ -132,7 +132,7 @@ public class MenuHolder implements InventoryHolder {
 
         stopPlaceholderUpdate();
 
-        SchedulerUtil.runTaskAsynchronously(this.plugin, () -> {
+        // SchedulerUtil.runTaskAsynchronously(this.plugin, () -> { // placeholder desync (todo fix)
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -190,7 +190,7 @@ public class MenuHolder implements InventoryHolder {
             }
 
             final boolean needPlaceholderTask = update;
-            SchedulerUtil.runTask(plugin, getViewer(), () -> {
+            // SchedulerUtil.runTask(plugin, getViewer(), () -> {
                 for (Map.Entry<Integer, ItemStack> entry : itemStacks.entrySet()) {
                     getInventory().setItem(entry.getKey(), entry.getValue());
                 }
@@ -202,8 +202,8 @@ public class MenuHolder implements InventoryHolder {
                 }
 
                 setUpdating(false);
-            });
-        });
+            // });
+        // });
     }
 
     public void stopPlaceholderUpdate() {
