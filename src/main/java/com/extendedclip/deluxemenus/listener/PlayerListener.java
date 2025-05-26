@@ -21,6 +21,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -183,6 +184,15 @@ public class PlayerListener extends Listener {
 
             ItemStack itemStack = item.getItemStack(holder);
             if (itemStack != null && itemStack.getType() != Material.AIR) {
+                if (item.options().hasLore()) {
+                    ItemMeta itemMeta = itemStack.getItemMeta();
+
+                    if (itemMeta != null) {
+                        itemMeta.setLore(null);
+                        itemStack.setItemMeta(itemMeta);
+                    }
+                }
+
                 player.getInventory().addItem(itemStack);
             }
         };
