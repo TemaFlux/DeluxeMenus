@@ -24,10 +24,14 @@ public class SchedulerUtil {
         if (plugin == null || action == null) return null;
 
         if (Bukkit.isPrimaryThread()) {
-            try {
-                action.run();
-            } catch (Throwable e) {
-                e.printStackTrace();
+            if (VersionHelper.isFolia()) {
+                Bukkit.getScheduler().runTask(plugin, ignored -> action.run());
+            } else {
+                try {
+                    action.run();
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
 
             return Task.EMPTY;

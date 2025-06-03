@@ -218,6 +218,15 @@ public final class VersionHelper {
     }
 
     public static boolean isFolia() {
-        return IS_FOLIA == null ? IS_FOLIA = Bukkit.getVersion().toLowerCase().contains("folia") : IS_FOLIA;
+        if (IS_FOLIA == null) {
+            try {
+                Class.forName("io.papermc.paper.threadedregions.scheduler.RegionScheduler");
+                IS_FOLIA = true;
+            } catch (Throwable ignored) {
+                IS_FOLIA = false;
+            }
+        }
+
+        return IS_FOLIA;
     }
 }
