@@ -8,6 +8,7 @@ import com.extendedclip.deluxemenus.action.ClickAction;
 import com.extendedclip.deluxemenus.action.ClickActionTask;
 import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.hooks.ItemHook;
+import com.extendedclip.deluxemenus.menu.options.CustomModelDataComponent;
 import com.extendedclip.deluxemenus.menu.options.LoreAppendMode;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
@@ -638,6 +639,13 @@ public class DeluxeMenusConfig {
                     .tooltipStyle(c.getString(currentPath + "tooltip_style", null))
                     .itemModel(c.getString(currentPath + "item_model", null));
 
+            if (c.contains(currentPath + "model_data_component") && c.isConfigurationSection(currentPath + "model_data_component")) {
+                final ConfigurationSection modelDataComponent = c.getConfigurationSection(currentPath + "model_data_component");
+                if (modelDataComponent != null) {
+                    builder.customModelDataComponent(CustomModelDataComponent.builder().colors(modelDataComponent.getStringList("colors")).flags(modelDataComponent.getStringList("flags")).floats(modelDataComponent.getStringList("floats")).strings(modelDataComponent.getStringList("strings")));
+                }
+            }
+
             // Lore Append Mode
             if (c.contains(currentPath + "lore_append_mode")) {
                 String loreAppendMode = c.getString(currentPath + "lore_append_mode", "OVERRIDE").toUpperCase();
@@ -937,6 +945,18 @@ public class DeluxeMenusConfig {
                         wrapper.setCustomData(c.getInt(rPath + ".modeldata", 0));
                     }
 
+                    if (c.contains(rPath + ".model_data_component") && c.isConfigurationSection(rPath + ".model_data_component")) {
+                        final ConfigurationSection modelDataComponent = c.getConfigurationSection(rPath + ".model_data_component");
+                        if (modelDataComponent != null) {
+                            wrapper.setCustomModelDataComponent(
+                                    CustomModelDataComponent.builder()
+                                            .colors(modelDataComponent.getStringList("colors"))
+                                            .flags(modelDataComponent.getStringList("flags"))
+                                            .floats(modelDataComponent.getStringList("floats"))
+                                            .strings(modelDataComponent.getStringList("strings")));
+                        }
+                    }
+
                     if (c.contains(rPath + ".name_contains")) {
                         wrapper.setNameContains(c.getBoolean(rPath + ".name_contains"));
                     } else {
@@ -998,7 +1018,7 @@ public class DeluxeMenusConfig {
                             plugin.debug(
                                     DebugLevel.HIGHEST,
                                     Level.WARNING,
-                                    "Has Permissions requirement at path: " + rPath + " has a minimum higher than the amount of permissions. Using "+permissions.size()+" instead"
+                                    "Has Permissions requirement at path: " + rPath + " has a minimum higher than the amount of permissions. Using " + permissions.size() + " instead"
                             );
                             minimum = permissions.size();
                         }
@@ -1303,9 +1323,14 @@ public class DeluxeMenusConfig {
     public File getMenuDirector() {
         return menuDirectory;
     }
-    public void addEnchantmentsOptionToBuilder(final FileConfiguration c, final String currentPath,
-                                               final String itemKey, final String menuName,
-                                               final MenuItemOptions.MenuItemOptionsBuilder builder) {
+
+    public void addEnchantmentsOptionToBuilder(
+            final FileConfiguration c,
+            final String currentPath,
+            final String itemKey,
+            final String menuName,
+            final MenuItemOptions.MenuItemOptionsBuilder builder
+    ) {
         if (!c.contains(currentPath + "enchantments")) {
             return;
         }
@@ -1318,9 +1343,7 @@ public class DeluxeMenusConfig {
                 plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
-                        "Enchantment format '" + configEnchantment + "' is incorrect for item " + itemKey +
-                                " in GUI " + menuName + "!",
-                        "Correct format: - '<Enchantment name>;<level>"
+                        "Enchantment format '" + configEnchantment + "' is incorrect for item " + itemKey + " in GUI " + menuName + "!", "Correct format: - '<Enchantment name>;<level>"
                 );
                 continue;
             }
@@ -1330,9 +1353,7 @@ public class DeluxeMenusConfig {
                 plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
-                        "Enchantment format '" + configEnchantment + "' is incorrect for item " + itemKey +
-                                " in GUI " + menuName + "!",
-                        "Correct format: - '<Enchantment name>;<level>"
+                        "Enchantment format '" + configEnchantment + "' is incorrect for item " + itemKey + " in GUI " + menuName + "!", "Correct format: - '<Enchantment name>;<level>"
                 );
                 continue;
             }
@@ -1344,8 +1365,7 @@ public class DeluxeMenusConfig {
                 plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
-                        "Enchantment '" + parts[0].strip() + "' for item " + itemKey +
-                                " in menu " + menuName + " is not a valid enchantment name!"
+                        "Enchantment '" + parts[0].strip() + "' for item " + itemKey + " in menu " + menuName + " is not a valid enchantment name!"
                 );
             }
 
@@ -1355,8 +1375,7 @@ public class DeluxeMenusConfig {
                 plugin.debug(
                         DebugLevel.HIGHEST,
                         Level.WARNING,
-                        "Enchantment level '" + parts[1].strip() + "' is incorrect for item " + itemKey +
-                                " in menu " + menuName + "!"
+                        "Enchantment level '" + parts[1].strip() + "' is incorrect for item " + itemKey + " in menu " + menuName + "!"
                 );
             }
             parsedEnchantments.put(enchantment, level);
@@ -1364,8 +1383,13 @@ public class DeluxeMenusConfig {
         builder.enchantments(parsedEnchantments);
     }
 
-    public void addDamageOptionToBuilder(final FileConfiguration c, final String currentPath, final String itemKey,
-                                         final String menuName, final MenuItemOptions.MenuItemOptionsBuilder builder) {
+    public void addDamageOptionToBuilder(
+            final FileConfiguration c,
+            final String currentPath,
+            final String itemKey,
+            final String menuName,
+            final MenuItemOptions.MenuItemOptionsBuilder builder
+    ) {
         boolean damageOptionIsPresent = false;
         String damageValue = null;
 

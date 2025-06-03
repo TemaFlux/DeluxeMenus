@@ -2,7 +2,6 @@ package com.extendedclip.deluxemenus.menu.options;
 
 import com.extendedclip.deluxemenus.action.ClickHandler;
 import com.extendedclip.deluxemenus.config.DeluxeMenusConfig;
-import com.extendedclip.deluxemenus.menu.options.LoreAppendMode;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
 import org.bukkit.DyeColor;
 import org.bukkit.block.banner.Pattern;
@@ -20,6 +19,7 @@ public class MenuItemOptions {
     private final String damage;
     private final int amount;
     private final String customModelData;
+    private final CustomModelDataComponent customModelDataComponent;
     private final String dynamicAmount;
     private final String lightLevel;
     private final String displayName;
@@ -85,6 +85,7 @@ public class MenuItemOptions {
         this.damage = builder.damage;
         this.amount = builder.amount;
         this.customModelData = builder.customModelData;
+        this.customModelDataComponent = builder.customModelDataComponent;
         this.dynamicAmount = builder.dynamicAmount;
         this.lightLevel = builder.lightLevel;
         this.displayName = builder.displayName;
@@ -154,6 +155,10 @@ public class MenuItemOptions {
 
     public @NotNull Optional<String> customModelData() {
         return Optional.ofNullable(customModelData);
+    }
+
+    public @NotNull Optional<CustomModelDataComponent> customModelDataComponent() {
+        return Optional.ofNullable(customModelDataComponent);
     }
 
     public @NotNull Optional<String> dynamicAmount() {
@@ -362,6 +367,7 @@ public class MenuItemOptions {
                 .damage(this.damage)
                 .amount(this.amount)
                 .customModelData(this.customModelData)
+                .customModelDataComponent(this.customModelDataComponent)
                 .dynamicAmount(this.dynamicAmount)
                 .lightLevel(this.lightLevel)
                 .displayName(this.displayName)
@@ -417,6 +423,7 @@ public class MenuItemOptions {
         private String damage;
         private int amount;
         private String customModelData;
+        private CustomModelDataComponent customModelDataComponent;
         private String dynamicAmount;
         private String lightLevel;
         private String displayName;
@@ -497,6 +504,11 @@ public class MenuItemOptions {
 
         public MenuItemOptionsBuilder customModelData(final @Nullable String customModelData) {
             this.customModelData = customModelData;
+            return this;
+        }
+
+        public MenuItemOptionsBuilder customModelDataComponent(final @Nullable CustomModelDataComponent customModelDataComponent) {
+            this.customModelDataComponent = customModelDataComponent;
             return this;
         }
 
@@ -622,21 +634,6 @@ public class MenuItemOptions {
         public MenuItemOptionsBuilder hideEnchants(final boolean hideEnchants) {
             if (hideEnchants) {
                 this.itemFlags.add(ItemFlag.HIDE_ENCHANTS);
-            }
-            return this;
-        }
-
-        /**
-         * @deprecated Use {@link #itemFlags(Collection)} with {@link ItemFlag#HIDE_UNBREAKABLE}
-         */
-        @Deprecated
-        public MenuItemOptionsBuilder hidePotionEffects(final boolean hidePotionEffects) {
-            if (hidePotionEffects) {
-                try {
-                    this.itemFlags.add(ItemFlag.HIDE_POTION_EFFECTS);
-                } catch (Throwable ignored) {
-                    this.itemFlags.add(ItemFlag.valueOf("HIDE_ITEM_SPECIFICS"));
-                }
             }
             return this;
         }
