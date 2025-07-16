@@ -56,18 +56,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -303,14 +295,31 @@ public class DeluxeMenusConfig {
         Set<String> keys = guiMenus == null ? null : guiMenus.getKeys(false);
 
         if (keys == null || keys.isEmpty()) {
-            if (menuDirectory.exists() && menuDirectory.isDirectory()) try (Stream<Path> stream = Files.walk(menuDirectory.toPath())) {
-                String path = menuDirectory.toPath().toString().replace("\\", "/"); // windows fix...
-                stream.filter(Files::isRegularFile).forEach(file -> loadMenuFromFile(file.toFile().getPath()
-                    .replace("\\", "/") // windows fix...
-                    .replaceFirst(path, ""))
-                );
-            } catch (Throwable e) {
-                e.printStackTrace();
+            if (menuDirectory.exists() && menuDirectory.isDirectory()) {
+                Path rootPath = menuDirectory.toPath();
+                Set<Path> visited = new HashSet<>();
+
+                if (Files.exists(rootPath) && Files.isDirectory(rootPath)) {
+                    try (Stream<Path> stream = Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)) {
+                        String basePath = rootPath.toString().replace("\\", "/"); // windows fix...
+
+                        stream.filter(path -> {
+                            try {
+                                Path realPath = path.toRealPath();
+                                if (!visited.add(realPath)) return false;
+
+                                return Files.isRegularFile(path);
+                            } catch (Throwable e) {
+                                return false;
+                            }
+                        }).forEach(file -> {
+                            String filePath = file.toAbsolutePath().toString().replace("\\", "/"); // windows fix...
+                            loadMenuFromFile(filePath.replaceFirst(basePath, ""));
+                        });
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
             return Menu.getLoadedMenuSize();
