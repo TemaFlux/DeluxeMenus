@@ -296,29 +296,37 @@ public class DeluxeMenusConfig {
 
         if (keys == null || keys.isEmpty()) {
             if (menuDirectory.exists() && menuDirectory.isDirectory()) {
-                Path rootPath = menuDirectory.toPath();
-                Set<Path> visited = new HashSet<>();
+                try {
+                    Path rootPath = menuDirectory.toPath().toRealPath();
+                    Set<Path> visited = new HashSet<>();
 
-                if (Files.exists(rootPath) && Files.isDirectory(rootPath)) {
                     try (Stream<Path> stream = Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)) {
-                        String basePath = rootPath.toString().replace("\\", "/"); // windows fix...
-
-                        stream.filter(path -> {
+                        stream.parallel().filter(Files::isRegularFile).filter(path -> {
                             try {
                                 Path realPath = path.toRealPath();
-                                if (!visited.add(realPath)) return false;
-
-                                return Files.isRegularFile(path);
+                                return visited.add(realPath);
+                            } catch (IOException e) {
+                                return false;
+                            }
+                        }).filter(file -> {
+                            try {
+                                return file.toAbsolutePath().startsWith(rootPath);
                             } catch (Throwable e) {
                                 return false;
                             }
                         }).forEach(file -> {
-                            String filePath = file.toAbsolutePath().toString().replace("\\", "/"); // windows fix...
-                            loadMenuFromFile(filePath.replaceFirst(basePath, ""));
+                            try {
+                                Path relative = rootPath.relativize(file);
+                                String cleanPath = relative.toString().replace("\\", "/"); // windows fix...
+
+                                loadMenuFromFile(cleanPath);
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            }
                         });
-                    } catch (Throwable e) {
-                        e.printStackTrace();
                     }
+                } catch (Throwable e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -337,7 +345,6 @@ public class DeluxeMenusConfig {
     }
 
     public boolean loadMenuFromFile(String menuName) {
-
         String fileName = plugin.getConfig().getString("gui_menus." + menuName + ".file");
         if (!plugin.getConfig().contains("gui_menus." + menuName + ".file", true)) {
             if (menuName.startsWith("/")) menuName = menuName.replaceFirst("/", "");
