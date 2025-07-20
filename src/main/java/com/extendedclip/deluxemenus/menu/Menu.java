@@ -18,10 +18,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Menu {
 
-    private static final Map<String, Menu> menus = new HashMap<>();
+    private static final Map<String, Menu> menus = new ConcurrentHashMap<>();
     private static final Set<MenuHolder> menuHolders = new HashSet<>();
     private static final Map<UUID, Menu> lastOpenedMenus = new HashMap<>();
 
