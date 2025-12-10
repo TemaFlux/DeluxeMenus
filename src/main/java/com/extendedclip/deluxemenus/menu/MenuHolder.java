@@ -23,6 +23,7 @@ public class MenuHolder implements InventoryHolder {
     private String menuName;
     private Set<MenuItem> activeItems;
     private SchedulerUtil.Task updateTask = null;
+    private SchedulerUtil.Task refreshTask = null;
     private Inventory inventory;
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
@@ -133,6 +134,7 @@ public class MenuHolder implements InventoryHolder {
         stopPlaceholderUpdate();
 
         // SchedulerUtil.runTaskAsynchronously(this.plugin, () -> { // placeholder desync (todo fix)
+        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -172,6 +174,7 @@ public class MenuHolder implements InventoryHolder {
 
             boolean update = false;
             Map<Integer, ItemStack> itemStacks = new HashMap<>(active.size() - 1);
+            // Bukkit.getScheduler().runTask(plugin, () -> {
 
             for (MenuItem item : active) {
                 ItemStack iStack = item.getItemStack(this);
@@ -197,8 +200,10 @@ public class MenuHolder implements InventoryHolder {
 
                 setActiveItems(active);
 
-                if (needPlaceholderTask) {
+                if (update && updateTask == null) {
                     startUpdatePlaceholdersTask();
+                } else if (!update && updateTask != null) {
+                    stopPlaceholderUpdate();
                 }
 
                 setUpdating(false);
@@ -214,6 +219,33 @@ public class MenuHolder implements InventoryHolder {
             }
             updateTask = null;
         }
+    }
+
+    public void stopRefreshTask() {
+        if(refreshTask != null) {
+            try {
+                refreshTask.cancel();
+            } catch (Exception ignored) {
+            }
+            refreshTask = null;
+        }
+    }
+
+    public void startRefreshTask() {
+        if(refreshTask != null) {
+            stopRefreshTask();
+        }
+
+        refreshTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                refreshMenu();
+            }
+        }.runTaskTimerAsynchronously(plugin, 20L,
+                20L * Menu.getMenuByName(menuName)
+                        .map(Menu::options)
+                        .map(MenuOptions::refreshInterval)
+                        .orElse(10));
     }
 
     public void startUpdatePlaceholdersTask() {

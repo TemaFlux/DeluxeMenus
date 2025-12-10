@@ -26,7 +26,6 @@ public class MenuItemOptions {
     private final List<String> lore;
     private final DyeColor baseColor;
     private HeadType headType;
-    private final String placeholderData;
     private final String rgb;
 
     private final String trimMaterial;
@@ -94,7 +93,6 @@ public class MenuItemOptions {
         this.loreAppendMode = builder.loreAppendMode;
         this.baseColor = builder.baseColor;
         this.headType = builder.headType;
-        this.placeholderData = builder.placeholderData;
         this.rgb = builder.rgb;
         this.trimMaterial = builder.trimMaterial;
         this.trimPattern = builder.trimPattern;
@@ -187,10 +185,6 @@ public class MenuItemOptions {
 
     public @NotNull Optional<HeadType> headType() {
         return Optional.ofNullable(headType);
-    }
-
-    public @NotNull Optional<String> placeholderData() {
-        return Optional.ofNullable(placeholderData);
     }
 
     public @NotNull Optional<String> rgb() {
@@ -376,7 +370,6 @@ public class MenuItemOptions {
                 .loreAppendMode(this.loreAppendMode)
                 .baseColor(this.baseColor)
                 .headType(this.headType)
-                .placeholderData(this.placeholderData)
                 .rgb(this.rgb)
                 .trimMaterial(this.trimMaterial)
                 .trimPattern(this.trimPattern)
@@ -430,7 +423,6 @@ public class MenuItemOptions {
         private List<String> lore = Collections.emptyList();
         private DyeColor baseColor;
         private HeadType headType;
-        private String placeholderData;
         private String rgb;
 
         private String trimMaterial;
@@ -543,11 +535,6 @@ public class MenuItemOptions {
 
         public MenuItemOptionsBuilder headType(final @Nullable HeadType headType) {
             this.headType = headType;
-            return this;
-        }
-
-        public MenuItemOptionsBuilder placeholderData(final @Nullable String placeholderData) {
-            this.placeholderData = placeholderData;
             return this;
         }
 

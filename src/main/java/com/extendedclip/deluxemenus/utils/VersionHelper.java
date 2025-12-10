@@ -22,7 +22,7 @@ public final class VersionHelper {
     public static final String NMS_VERSION = PACKAGE_NAME.substring(PACKAGE_NAME.lastIndexOf('.') + 1);
     private static Boolean IS_FOLIA;
 
-    // Custom Model Data ComponentAdd commentMore actions
+    // Custom Model Data Component
     private static final int V1_21_4 = 1_21_4;
     // Tooltip Style & Item Model
     private static final int V1_21_2 = 1_21_2;

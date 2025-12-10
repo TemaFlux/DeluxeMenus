@@ -68,6 +68,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.extendedclip.deluxemenus.utils.Constants.PLACEHOLDER_PREFIX;
+import static com.extendedclip.deluxemenus.utils.Constants.STACK_PREFIX;
 import static com.extendedclip.deluxemenus.utils.Constants.PLAYER_ITEMS;
 import static com.extendedclip.deluxemenus.utils.Constants.WATER_BOTTLE;
 
@@ -85,6 +86,7 @@ public class DeluxeMenusConfig {
         VALID_MATERIALS.add(WATER_BOTTLE);
 
         VALID_MATERIAL_PREFIXES.add(PLACEHOLDER_PREFIX);
+        VALID_MATERIAL_PREFIXES.add(STACK_PREFIX);
     }
 
     private final String separator = File.separator;

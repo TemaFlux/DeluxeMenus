@@ -10,7 +10,9 @@ import com.extendedclip.deluxemenus.dupe.MenuItemMarker;
 import com.extendedclip.deluxemenus.hooks.*;
 import com.extendedclip.deluxemenus.listener.PlayerListener;
 import com.extendedclip.deluxemenus.menu.Menu;
+import com.extendedclip.deluxemenus.menu.MenuItem;
 import com.extendedclip.deluxemenus.menu.options.HeadType;
+import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.nbt.NbtProvider;
 import com.extendedclip.deluxemenus.persistentmeta.PersistentMetaHandler;
 import com.extendedclip.deluxemenus.placeholder.Expansion;
@@ -22,6 +24,9 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedPie;
+import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -31,11 +36,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -271,6 +272,10 @@ public class DeluxeMenus extends JavaPlugin {
                 // We are looking for this specific class because we've had issues with other plugins being named HeadDatabase
                 // in the past
             }
+        }
+
+        if (Bukkit.getPluginManager().isPluginEnabled("CraftEngine")) {
+            this.itemHooks.put("craftengine", new CraftEngineHook());
         }
 
         if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
