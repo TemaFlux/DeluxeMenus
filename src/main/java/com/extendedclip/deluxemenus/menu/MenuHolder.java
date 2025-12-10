@@ -134,7 +134,6 @@ public class MenuHolder implements InventoryHolder {
         stopPlaceholderUpdate();
 
         // SchedulerUtil.runTaskAsynchronously(this.plugin, () -> { // placeholder desync (todo fix)
-        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
 
             final Set<MenuItem> active = new HashSet<>();
 
@@ -192,7 +191,6 @@ public class MenuHolder implements InventoryHolder {
                 itemStacks.put(slot, iStack);
             }
 
-            final boolean needPlaceholderTask = update;
             // SchedulerUtil.runTask(plugin, getViewer(), () -> {
                 for (Map.Entry<Integer, ItemStack> entry : itemStacks.entrySet()) {
                     getInventory().setItem(entry.getKey(), entry.getValue());
