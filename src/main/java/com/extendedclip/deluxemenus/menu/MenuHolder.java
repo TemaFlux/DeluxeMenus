@@ -5,6 +5,8 @@ import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.extendedclip.deluxemenus.utils.StringUtils;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -17,17 +19,30 @@ import java.util.*;
 public class MenuHolder implements InventoryHolder {
 
     private final DeluxeMenus plugin;
+    @Getter
     private final Player viewer;
 
+    @Getter
+    @Setter
     private Player placeholderPlayer;
+    @Setter
+    @Getter
     private String menuName;
+    @Setter
+    @Getter
     private Set<MenuItem> activeItems;
+    @Getter
     private SchedulerUtil.Task updateTask = null;
     private SchedulerUtil.Task refreshTask = null;
+    @Setter
     private Inventory inventory;
+    @Setter
+    @Getter
     private boolean updating;
     private boolean parsePlaceholdersInArguments;
     private boolean parsePlaceholdersAfterArguments;
+    @Setter
+    @Getter
     private Map<String, String> typedArgs;
 
     public MenuHolder(final @NotNull DeluxeMenus plugin, final @NotNull Player viewer) {
@@ -46,30 +61,6 @@ public class MenuHolder implements InventoryHolder {
 
     public String getViewerName() {
         return viewer.getName();
-    }
-
-    public SchedulerUtil.Task getUpdateTask() {
-        return updateTask;
-    }
-
-    public Player getViewer() {
-        return viewer;
-    }
-
-    public String getMenuName() {
-        return menuName;
-    }
-
-    public void setMenuName(String menuName) {
-        this.menuName = menuName;
-    }
-
-    public Set<MenuItem> getActiveItems() {
-        return activeItems;
-    }
-
-    public void setActiveItems(Set<MenuItem> items) {
-        this.activeItems = items;
     }
 
     public MenuHolder getHolder() {
@@ -234,13 +225,7 @@ public class MenuHolder implements InventoryHolder {
             stopRefreshTask();
         }
 
-        refreshTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                refreshMenu();
-            }
-        }.runTaskTimerAsynchronously(plugin, 20L,
-                20L * Menu.getMenuByName(menuName)
+        refreshTask = SchedulerUtil.runTaskTimerAsynchronously(plugin, this::refreshMenu, 20L, 20L * Menu.getMenuByName(menuName)
                         .map(Menu::options)
                         .map(MenuOptions::refreshInterval)
                         .orElse(10));
@@ -310,29 +295,9 @@ public class MenuHolder implements InventoryHolder {
                         .orElse(10));
     }
 
-    public boolean isUpdating() {
-        return updating;
-    }
-
-    public void setUpdating(boolean updating) {
-        this.updating = updating;
-    }
-
     @Override
     public @NotNull Inventory getInventory() {
         return this.inventory;
-    }
-
-    public void setInventory(Inventory i) {
-        this.inventory = i;
-    }
-
-    public Map<String, String> getTypedArgs() {
-        return typedArgs;
-    }
-
-    public void setTypedArgs(Map<String, String> typedArgs) {
-        this.typedArgs = typedArgs;
     }
 
     public void parsePlaceholdersInArguments(final boolean parsePlaceholdersInArguments) {
@@ -349,14 +314,6 @@ public class MenuHolder implements InventoryHolder {
 
     public boolean parsePlaceholdersAfterArguments() {
         return parsePlaceholdersAfterArguments;
-    }
-
-    public void setPlaceholderPlayer(Player placeholderPlayer) {
-        this.placeholderPlayer = placeholderPlayer;
-    }
-
-    public Player getPlaceholderPlayer() {
-        return placeholderPlayer;
     }
 
     public @NotNull DeluxeMenus getPlugin() {

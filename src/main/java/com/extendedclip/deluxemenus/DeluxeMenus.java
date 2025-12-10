@@ -10,9 +10,7 @@ import com.extendedclip.deluxemenus.dupe.MenuItemMarker;
 import com.extendedclip.deluxemenus.hooks.*;
 import com.extendedclip.deluxemenus.listener.PlayerListener;
 import com.extendedclip.deluxemenus.menu.Menu;
-import com.extendedclip.deluxemenus.menu.MenuItem;
 import com.extendedclip.deluxemenus.menu.options.HeadType;
-import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.nbt.NbtProvider;
 import com.extendedclip.deluxemenus.persistentmeta.PersistentMetaHandler;
 import com.extendedclip.deluxemenus.placeholder.Expansion;
@@ -22,11 +20,9 @@ import com.extendedclip.deluxemenus.utils.Messages;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import lombok.Getter;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
-import org.bstats.bukkit.Metrics;
-import org.bstats.charts.AdvancedPie;
-import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -47,7 +43,9 @@ public class DeluxeMenus extends JavaPlugin {
 
     private static final DebugLevel STACKTRACE_PRINT_LEVEL = DebugLevel.MEDIUM;
 
+    @Getter
     private PersistentMetaHandler persistentMetaHandler;
+    @Getter
     private MenuItemMarker menuItemMarker;
 
     private BukkitAudiences audiences;
@@ -55,8 +53,10 @@ public class DeluxeMenus extends JavaPlugin {
     private VaultHook vaultHook;
 
     private ItemStack head;
+    @Getter
     private Map<String, ItemHook> itemHooks;
 
+    @Getter
     private final GeneralConfig generalConfig = new GeneralConfig(this);
     private DeluxeMenusConfig menuConfig;
 
@@ -132,10 +132,6 @@ public class DeluxeMenus extends JavaPlugin {
         return Optional.ofNullable(itemHooks.get(id));
     }
 
-    public Map<String, ItemHook> getItemHooks() {
-        return itemHooks;
-    }
-
     public ItemStack getHead() {
         return head != null ? head : new ItemStack(Material.DIRT, 1);
     }
@@ -183,20 +179,12 @@ public class DeluxeMenus extends JavaPlugin {
         this.getLogger().log(level, String.join(System.lineSeparator(), messages));
     }
 
-    public MenuItemMarker getMenuItemMarker() {
-        return menuItemMarker;
-    }
-
     public DeluxeMenusConfig getConfiguration() {
         return menuConfig;
     }
 
     public VaultHook getVault() {
         return vaultHook;
-    }
-
-    public PersistentMetaHandler getPersistentMetaHandler() {
-        return persistentMetaHandler;
     }
 
     public BukkitAudiences audiences() {
@@ -212,10 +200,6 @@ public class DeluxeMenus extends JavaPlugin {
 
     public void reload() {
         this.generalConfig.reload();
-    }
-
-    public GeneralConfig getGeneralConfig() {
-        return generalConfig;
     }
 
     private boolean hookIntoPlaceholderAPI() {

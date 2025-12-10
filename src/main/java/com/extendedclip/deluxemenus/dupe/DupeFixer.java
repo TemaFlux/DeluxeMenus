@@ -55,7 +55,7 @@ public class DupeFixer extends Listener {
     }
 
     @EventHandler
-    private void onLogin(@NotNull final PlayerLoginEvent event) {
+    private void onLogin(@NotNull final PlayerJoinEvent event) {
         SchedulerUtil.runTaskLater(
                 plugin, event.getPlayer(),
                 () -> {
