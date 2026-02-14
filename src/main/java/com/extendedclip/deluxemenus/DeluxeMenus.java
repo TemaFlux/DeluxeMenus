@@ -106,7 +106,7 @@ public class DeluxeMenus extends JavaPlugin {
         new Expansion(this).register();
 
         setUpBungeeCordMessaging();
-        setUpUpdateChecker();
+        // setUpUpdateChecker();
         setUpMetrics();
     }
 
