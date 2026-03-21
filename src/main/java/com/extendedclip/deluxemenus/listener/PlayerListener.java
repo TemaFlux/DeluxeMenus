@@ -11,7 +11,6 @@ import com.extendedclip.deluxemenus.utils.SchedulerUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.bukkit.Material;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -168,7 +167,7 @@ public class PlayerListener extends Listener {
 
                 for (Requirement r : requirementList.getRequirements()) {
                     if (r.evaluate(holder)) {
-                        successful = successful + 1;
+                        successful++;
                         if (requirementList.stopAtSuccess() && successful >= requirementList.getMinimumRequirements()) {
                             break;
                         }
@@ -238,7 +237,7 @@ public class PlayerListener extends Listener {
             }
         }
 
-        // giveItem.accept(null);
+        giveItem.accept(null);
     }
 
     /**
