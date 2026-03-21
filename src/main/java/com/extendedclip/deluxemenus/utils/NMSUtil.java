@@ -1,6 +1,11 @@
 package com.extendedclip.deluxemenus.utils;
 
+import com.cryptomorin.xseries.XEnchantment;
 import org.bukkit.Bukkit;
+import org.bukkit.enchantments.Enchantment;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class NMSUtil {
     private static String cachedVersion = null;
@@ -48,5 +53,36 @@ public final class NMSUtil {
         }
 
         return cachedVersionNumber;
+    }
+
+    private static final Map<String, Enchantment> enchantmentCache = new LinkedHashMap<>();
+
+    public static Enchantment getEnchantment(String enchantName) {
+        if (enchantName == null || enchantName.trim().isEmpty()) return null;
+
+        if (enchantmentCache.containsKey(enchantName.toLowerCase()))
+            return enchantmentCache.get(enchantName.toLowerCase());
+
+        final XEnchantment xEnchantment = XEnchantment.matchXEnchantment(enchantName).orElse(null);
+        final Enchantment enchantment = xEnchantment == null ? null : xEnchantment.getEnchant();
+        if (enchantment != null) return enchantment;
+
+        try {
+            Enchantment value = Enchantment.getByName(enchantName);
+            if (value != null) return value;
+        } catch (Throwable ignored) {}
+
+        try {
+            for (Enchantment value : Enchantment.values()) {
+                if (value.getName().equalsIgnoreCase(enchantName.toLowerCase()) ||
+                    value.getKey().value().equalsIgnoreCase(enchantName.toLowerCase())
+                ) {
+                    enchantmentCache.put(enchantName.toLowerCase(), value);
+                    return value;
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        return null;
     }
 }
