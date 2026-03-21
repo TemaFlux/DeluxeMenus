@@ -109,6 +109,8 @@ public class ChestCommands {
         private final Map<String, Integer> requiredItems = new HashMap<>(); // {material}:{?durability},{?amount}
         private String permission, viewPermission;
         private String permissionMessage;
+        private final List<String> conditions = new ArrayList<>();
+        private String conditionMessage;
 
         private boolean keepOpen;
         private final List<Action> actions = new ArrayList<>();
@@ -231,9 +233,15 @@ public class ChestCommands {
 
             keepOpen = section.getBoolean("KEEP-OPEN", false);
             actions.addAll(Action.from(section.getStringList("ACTIONS")));
+            
+            // Parse CONDITIONS (e.g., '%vault_eco_balance% >= 300')
+            conditions.addAll(section.getStringList("CONDITIONS").stream()
+                .filter(line -> !StringUtil.isBlank(line))
+                .collect(Collectors.toList()));
+            conditionMessage = section.getString("CONDITION-MESSAGE");
         }
 
-        public void toDeluxeMenuItem(@NonNull ConfigurationSection section) {
+        public void toDeluxeMenuItem(@NonNull ConfigurationSection section, String currentDirectory) {
             // section.set("slot", getSlot()); // not need if usage a pattern
 
             if (!StringUtil.isBlank(material) && material.toLowerCase().contains("head")) {
@@ -414,9 +422,67 @@ public class ChestCommands {
                     requirements.add(itemReq);
                 }
             }
+            
+            // Parse CONDITIONS (e.g., '%vault_eco_balance% >= 300')
+            for (String condition : conditions) {
+                if (StringUtil.isBlank(condition)) continue;
+                
+                // Parse condition like: %vault_eco_balance% >= 300 or %tm_tokens% >= 1500
+                String trimmedCondition = condition.trim();
+                
+                // Check for vault_eco_balance condition
+                if (trimmedCondition.contains("%vault_eco_balance%")) {
+                    String[] parts = trimmedCondition.split(">=");
+                    if (parts.length == 2) {
+                        try {
+                            String amountStr = parts[1].trim();
+                            double amount = Double.parseDouble(amountStr);
+                            
+                            Map<String, Object> moneyReq = new HashMap<>();
+                            moneyReq.put("type", "has money");
+                            moneyReq.put("amount", amount);
+                            
+                            if (conditionMessage != null && !conditionMessage.isEmpty()) {
+                                moneyReq.put("deny_message", conditionMessage);
+                            }
+                            
+                            requirements.add(moneyReq);
+                            continue;
+                        } catch (NumberFormatException e) {
+                            System.err.println("[CONDITION] Failed to parse amount from: " + trimmedCondition);
+                        }
+                    }
+                }
+                
+                // Check for tm_tokens condition (VimeCoins)
+                // Use javascript requirement instead of has money, because has money only works with Vault
+                if (trimmedCondition.contains("%tm_tokens%")) {
+                    Map<String, Object> jsReq = new HashMap<>();
+                    jsReq.put("type", "javascript");
+                    jsReq.put("expression", trimmedCondition);
+
+                    if (conditionMessage != null && !conditionMessage.isEmpty()) {
+                        jsReq.put("deny_message", conditionMessage);
+                    }
+
+                    requirements.add(jsReq);
+                    continue;
+                }
+                
+                // For other conditions, use javascript requirement
+                Map<String, Object> jsReq = new HashMap<>();
+                jsReq.put("type", "javascript");
+                jsReq.put("expression", trimmedCondition);
+                
+                if (conditionMessage != null && !conditionMessage.isEmpty()) {
+                    jsReq.put("deny_message", conditionMessage);
+                }
+                
+                requirements.add(jsReq);
+            }
 
             if (!requirements.isEmpty()) {
-                ConfigurationSection clickRequirement = section.createSection("click_requirement");
+                ConfigurationSection clickRequirement = section.createSection("click_requirement.requirements");
                 List<String> denyCommands = null;
 
                 int index = 0;
@@ -432,10 +498,10 @@ public class ChestCommands {
                     }
                 }
 
-                if (denyCommands != null && !denyCommands.isEmpty()) clickRequirement.set("deny_commands", denyCommands);
+                if (denyCommands != null && !denyCommands.isEmpty()) clickRequirement.getParent().set("deny_commands", denyCommands);
             }
 
-            List<String> actionsList = Action.toDeluxeMenu(actions);
+            List<String> actionsList = Action.toDeluxeMenu(actions, currentDirectory);
 
             if (!keepOpen) {
                 actionsList.add("[close]");
@@ -465,7 +531,7 @@ public class ChestCommands {
             } else if (typeName.equalsIgnoreCase("open:")) {
                 type = Type.OPEN;
                 this.value = value.replaceFirst(Pattern.quote(typeName), "").trim().replace(".yml", "");
-            } else if (typeName.equalsIgnoreCase("tell:")) {
+            } else if (typeName.equalsIgnoreCase("tell:") || typeName.equalsIgnoreCase("message:")) {
                 type = Type.TELL;
                 this.value = value.replaceFirst(Pattern.quote(typeName), "").trim();
             } else if (typeName.equalsIgnoreCase("sound:")) {
@@ -494,7 +560,7 @@ public class ChestCommands {
             return actions;
         }
 
-        public static @NonNull List<String> toDeluxeMenu(List<Action> actions) {
+        public static @NonNull List<String> toDeluxeMenu(List<Action> actions, String currentDirectory) {
             List<String> actionsList = new ArrayList<>();
             if (actions == null || actions.isEmpty()) return actionsList;
 
@@ -506,12 +572,21 @@ public class ChestCommands {
                     }
 
                     case CONSOLE: {
-                        actionsList.add("[console] " + action.getValue());
+                        // Replace {player} with %player_name% for console commands
+                        String value = action.getValue().replace("{player}", "%player_name%");
+                        actionsList.add("[console] " + value);
                         break;
                     }
 
                     case OPEN: {
-                        actionsList.add("[open] " + action.getValue());
+                        // Use [openmenu] to open another menu
+                        // If the menu is in a subdirectory, we need to include the path
+                        String menuName = action.getValue();
+                        if (currentDirectory != null && !currentDirectory.isEmpty()) {
+                            // For menus in subdirectories like craft/, use the same directory
+                            menuName = currentDirectory + "/" + menuName;
+                        }
+                        actionsList.add("[openmenu] " + menuName);
                         break;
                     }
 
@@ -555,7 +630,9 @@ public class ChestCommands {
     }
 
     public static void main(String[] args) throws Throwable {
-        convertAll("input", "output_" + System.currentTimeMillis());
+        String inputFolder = args.length > 0 ? args[0] : "input";
+        String outputFolder = args.length > 1 ? args[1] : "output_" + System.currentTimeMillis();
+        convertAll(inputFolder, outputFolder);
     }
 
     public static void convertAll(String inputFolderPath, String outputFolderPath) throws Throwable {
@@ -577,11 +654,11 @@ public class ChestCommands {
 
         for (File file : files) {
             String outFilePath = Paths.get(outputFolderPath, file.getPath().replaceFirst(inputFolder.toPath().toString(), "")).toString();
-            convert(file.getPath(), outFilePath);
+            convert(file.getPath(), outFilePath, outputFolderPath);
         }
     }
 
-    public static void convert(String filePath, String outPath) throws Throwable {
+    public static void convert(String filePath, String outPath, String outputFolderPath) throws Throwable {
         Menu menu = new Menu(FileUtil.loadYaml(new File(filePath)));
 
         Map<String, List<Slot>> patternSlot = new LinkedHashMap<>();
@@ -624,7 +701,7 @@ public class ChestCommands {
         List<String> commands = menu.getSettings().getCommands();
         if (commands != null && !commands.isEmpty()) deluxeMenu.set("open_command", commands);
 
-        List<String> openActions = Action.toDeluxeMenu(menu.getSettings().getOpenActions());
+        List<String> openActions = Action.toDeluxeMenu(menu.getSettings().getOpenActions(), "");
         if (!openActions.isEmpty()) deluxeMenu.set("open_commands", commands);
 
         List<String> pattern = new ArrayList<>();
@@ -646,12 +723,23 @@ public class ChestCommands {
         deluxeMenu.set("pattern", pattern);
 
         ConfigurationSection itemSection = deluxeMenu.createSection("items");
+        
+        // Get the directory of the output file for relative menu paths
+        String currentDirectory = "";
+        File outFile = new File(outPath);
+        String parentPath = outFile.getParentFile() != null ? outFile.getParentFile().getAbsolutePath() : "";
+        String outputPathAbs = new File(outputFolderPath).getAbsolutePath();
+        
+        if (parentPath != null && parentPath.length() > outputPathAbs.length()) {
+            currentDirectory = parentPath.substring(outputPathAbs.length() + 1).replace('\\', '/');
+        }
+        
         for (Map.Entry<String, List<Slot>> entry : patternSlot.entrySet()) {
             String id = entry.getKey();
             Slot slot = entry.getValue().get(0);
 
             ConfigurationSection section = itemSection.createSection(id);
-            slot.toDeluxeMenuItem(section);
+            slot.toDeluxeMenuItem(section, currentDirectory);
         }
 
         deluxeMenu.save(new File(outPath));
