@@ -2,6 +2,7 @@ package com.extendedclip.deluxemenus.config;
 
 import com.cryptomorin.xseries.XEnchantment;
 import com.cryptomorin.xseries.XMaterial;
+import com.cryptomorin.xseries.XPotion;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.action.ActionType;
 import com.extendedclip.deluxemenus.action.ClickAction;
@@ -38,7 +39,6 @@ import com.google.common.base.Enums;
 import com.google.common.primitives.Ints;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -303,7 +303,7 @@ public class DeluxeMenusConfig {
                     Set<Path> visited = new HashSet<>();
 
                     try (Stream<Path> stream = Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)) {
-                        stream.parallel().filter(Files::isRegularFile).filter(path -> {
+                        stream.filter(Files::isRegularFile).filter(path -> {
                             try {
                                 Path realPath = path.toRealPath();
                                 return visited.add(realPath);
@@ -755,7 +755,10 @@ public class DeluxeMenusConfig {
                             continue;
                         }
 
-                        PotionEffectType type = PotionEffectType.getByName(metaParts[0]);
+                        String potionEffectName = metaParts[0].toUpperCase().replace(" ", "_");
+                        XPotion xPotion = XPotion.of(potionEffectName).orElse(null);
+                        PotionEffectType type = xPotion == null ? null : xPotion.get();
+
                         int duration = Integer.parseInt(metaParts[1]);
                         int amplifier = Integer.parseInt(metaParts[2]);
 
@@ -1376,8 +1379,8 @@ public class DeluxeMenusConfig {
                 continue;
             }
 
-            final XEnchantment xEnchantment = XEnchantment.matchXEnchantment(parts[0].strip().toUpperCase()).orElse(null);
-            final Enchantment enchantment = xEnchantment == null ? null : xEnchantment.getEnchant();
+            final String enchantName = parts[0].strip().toUpperCase().replace(" ", "_");
+            final Enchantment enchantment = NMSUtil.getEnchantment(enchantName);
 
             if (enchantment == null) {
                 plugin.debug(
@@ -1385,6 +1388,7 @@ public class DeluxeMenusConfig {
                         Level.WARNING,
                         "Enchantment '" + parts[0].strip() + "' for item " + itemKey + " in menu " + menuName + " is not a valid enchantment name!"
                 );
+                continue;
             }
 
             Integer level = Ints.tryParse(parts[1].strip());
