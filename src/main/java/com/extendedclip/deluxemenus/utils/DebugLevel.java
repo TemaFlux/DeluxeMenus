@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,15 +17,11 @@ public enum DebugLevel {
     HIGHEST(4, "HIGHEST");
 
     private final String[] names;
-    private final int priority;
+    @Getter private final int priority;
 
-    private DebugLevel(final int priority, @NotNull final String... names) {
+    DebugLevel(final int priority, @NotNull final String... names) {
         this.priority = priority;
         this.names = names;
-    }
-
-    public int getPriority() {
-        return priority;
     }
 
     private static final Map<String, DebugLevel> LEVELS = Arrays.stream(values())
