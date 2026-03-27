@@ -578,6 +578,7 @@ public class DeluxeMenusConfig {
 
         builder.parsePlaceholdersInArguments(c.getBoolean(pre + "arguments_support_placeholders", false));
         builder.parsePlaceholdersAfterArguments(c.getBoolean(pre + "parse_placeholders_after_arguments", false));
+        builder.minimessage(c.getBoolean(pre + "minimessage", false));
 
         // Don't need to register the menu since it's done in the constructor
         new Menu(plugin, builder.build(), items, path);
@@ -655,7 +656,8 @@ public class DeluxeMenusConfig {
                     .enchantmentGlintOverride(c.getString(currentPath + "enchantment_glint_override", null))
                     .rarity(c.getString(currentPath + "rarity", null))
                     .tooltipStyle(c.getString(currentPath + "tooltip_style", null))
-                    .itemModel(c.getString(currentPath + "item_model", null));
+                    .itemModel(c.getString(currentPath + "item_model", null))
+                    .minimessage(c.contains(currentPath + "minimessage") ? c.getBoolean(currentPath + "minimessage") : null);
 
             if (c.contains(currentPath + "model_data_component") && c.isConfigurationSection(currentPath + "model_data_component")) {
                 final ConfigurationSection modelDataComponent = c.getConfigurationSection(currentPath + "model_data_component");
@@ -1292,7 +1294,8 @@ public class DeluxeMenusConfig {
                             continue;
                         }
 
-                        final ClickActionTask actionTask = new ClickActionTask(plugin, holder.getViewer().getUniqueId(), action.getType(), action.getExecutable(), holder.getTypedArgs(), holder.parsePlaceholdersInArguments(), holder.parsePlaceholdersAfterArguments());
+                        final boolean minimessage = holder.isMiniMessage();
+                        final ClickActionTask actionTask = new ClickActionTask(plugin, holder.getViewer().getUniqueId(), action.getType(), action.getExecutable(), holder.getTypedArgs(), holder.parsePlaceholdersInArguments(), holder.parsePlaceholdersAfterArguments(), minimessage);
 
                         if (action.hasDelay()) {
                             actionTask.runTaskLater(plugin, this, action.getDelay(holder));

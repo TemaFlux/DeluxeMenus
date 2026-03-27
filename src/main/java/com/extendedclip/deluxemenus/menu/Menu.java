@@ -328,7 +328,7 @@ public class Menu {
 
             this.options.openHandler().ifPresent(h -> h.onClick(holder));
 
-            String title = this.options.title() == null ? null : StringUtils.color(holder.setPlaceholdersAndArguments(this.options.title()));
+            String title = this.options.title() == null ? null : StringUtils.color(holder.setPlaceholdersAndArguments(this.options.title()), this.options.minimessage());
 
             Inventory inventory;
 

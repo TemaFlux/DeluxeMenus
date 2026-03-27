@@ -31,6 +31,7 @@ public class ClickActionTask implements Runnable {
     private final Map<String, String> arguments;
     private final boolean parsePlaceholdersInArguments;
     private final boolean parsePlaceholdersAfterArguments;
+    private final boolean minimessage;
 
     public ClickActionTask(
             @NotNull final DeluxeMenus plugin,
@@ -39,7 +40,8 @@ public class ClickActionTask implements Runnable {
             @NotNull final String exec,
             @NotNull final Map<String, String> arguments,
             final boolean parsePlaceholdersInArguments,
-            final boolean parsePlaceholdersAfterArguments
+            final boolean parsePlaceholdersAfterArguments,
+            final boolean minimessage
     ) {
         this.plugin = plugin;
         this.uuid = uuid;
@@ -48,6 +50,7 @@ public class ClickActionTask implements Runnable {
         this.arguments = arguments;
         this.parsePlaceholdersInArguments = parsePlaceholdersInArguments;
         this.parsePlaceholdersAfterArguments = parsePlaceholdersAfterArguments;
+        this.minimessage = minimessage;
     }
 
     @Override
@@ -123,7 +126,7 @@ public class ClickActionTask implements Runnable {
                 break;
 
             case MESSAGE:
-                player.sendMessage(StringUtils.color(executable));
+                player.sendMessage(StringUtils.color(executable, this.minimessage));
                 break;
 
             case LOG:
@@ -155,7 +158,7 @@ public class ClickActionTask implements Runnable {
                 break;
 
             case BROADCAST:
-                Bukkit.broadcastMessage(StringUtils.color(executable));
+                Bukkit.broadcastMessage(StringUtils.color(executable, this.minimessage));
                 break;
 
             case CLOSE:

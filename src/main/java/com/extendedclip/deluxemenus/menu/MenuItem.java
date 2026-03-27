@@ -270,7 +270,7 @@ public class MenuItem {
 
         if (this.options.displayName().isPresent()) {
             final String displayName = holder.setPlaceholdersAndArguments(this.options.displayName().get());
-            itemMeta.setDisplayName(StringUtils.color(displayName));
+            itemMeta.setDisplayName(StringUtils.color(displayName, this.options.minimessage().orElse(holder.isMiniMessage())));
         }
 
         List<String> lore = new ArrayList<>();
@@ -596,7 +596,7 @@ public class MenuItem {
     protected List<String> getMenuItemLore(@NotNull final MenuHolder holder, @NotNull final List<String> lore) {
         return lore.stream()
                 .map(holder::setPlaceholdersAndArguments)
-                .map(StringUtils::color)
+                .map(line -> StringUtils.color(line, this.options.minimessage().orElse(holder.isMiniMessage())))
                 .flatMap(line -> Arrays.stream(line.replace("\\n", "\n").split("\n")))
                 .collect(Collectors.toList());
     }

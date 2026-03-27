@@ -78,6 +78,7 @@ public class MenuItemOptions {
     private final RequirementList middleClickRequirements;
 
     private final boolean giveItem;
+    private final Boolean minimessage;
 
     private MenuItemOptions(final @NotNull MenuItemOptionsBuilder builder) {
         this.material = builder.material;
@@ -133,6 +134,7 @@ public class MenuItemOptions {
         this.shiftRightClickRequirements = builder.shiftRightClickRequirements;
         this.middleClickRequirements = builder.middleClickRequirements;
         this.giveItem = builder.giveItem;
+        this.minimessage = builder.minimessage;
     }
 
     public static @NotNull MenuItemOptionsBuilder builder() {
@@ -355,6 +357,10 @@ public class MenuItemOptions {
         return giveItem;
     }
 
+    public @NotNull Optional<Boolean> minimessage() {
+        return Optional.ofNullable(minimessage);
+    }
+
     public @NotNull MenuItemOptionsBuilder asBuilder() {
         return MenuItemOptions.builder()
                 .material(this.material)
@@ -407,7 +413,8 @@ public class MenuItemOptions {
                 .shiftLeftClickRequirements(this.shiftLeftClickRequirements)
                 .shiftRightClickRequirements(this.shiftRightClickRequirements)
                 .middleClickRequirements(this.middleClickRequirements)
-                .giveItem(this.giveItem);
+                .giveItem(this.giveItem)
+                .minimessage(this.minimessage);
     }
 
     public static class MenuItemOptionsBuilder {
@@ -475,6 +482,7 @@ public class MenuItemOptions {
         private RequirementList middleClickRequirements;
 
         private boolean giveItem;
+        private Boolean minimessage;
 
         private MenuItemOptionsBuilder() {
         }
@@ -768,6 +776,11 @@ public class MenuItemOptions {
 
         public MenuItemOptionsBuilder giveItem(final boolean giveItem) {
             this.giveItem = giveItem;
+            return this;
+        }
+
+        public MenuItemOptionsBuilder minimessage(final @Nullable Boolean minimessage) {
+            this.minimessage = minimessage;
             return this;
         }
 

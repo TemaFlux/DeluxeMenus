@@ -80,6 +80,10 @@ public class MenuHolder implements InventoryHolder {
         return Menu.getMenuByName(menuName);
     }
 
+    public boolean isMiniMessage() {
+        return getMenu().isPresent() && getMenu().get().options().minimessage();
+    }
+
     public @NotNull String setPlaceholdersAndArguments(final @NotNull String string) {
         if (parsePlaceholdersAfterArguments) {
             return setPlaceholders(setArguments(string));
@@ -278,7 +282,7 @@ public class MenuHolder implements InventoryHolder {
                     ItemMeta meta = i.getItemMeta();
 
                     if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
-                        meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
+                        meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get()), isMiniMessage()));
                     }
 
                     if (item.options().loreHasPlaceholders()) {

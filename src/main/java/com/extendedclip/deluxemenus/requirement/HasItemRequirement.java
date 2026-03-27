@@ -125,8 +125,8 @@ public class HasItemRequirement extends Requirement {
       if (wrapper.getName() != null) {
         if (!metaToCheck.hasDisplayName()) return false;
 
-        String name = StringUtils.color(holder.setPlaceholdersAndArguments(wrapper.getName()));
-        String nameToCheck = StringUtils.color(holder.setPlaceholdersAndArguments(metaToCheck.getDisplayName()));
+        String name = StringUtils.color(holder.setPlaceholdersAndArguments(wrapper.getName()), holder.isMiniMessage());
+        String nameToCheck = StringUtils.color(holder.setPlaceholdersAndArguments(metaToCheck.getDisplayName()), holder.isMiniMessage());
 
         if (wrapper.checkNameContains() && wrapper.checkNameIgnoreCase()) {
           if (!org.apache.commons.lang3.StringUtils.containsIgnoreCase(nameToCheck, name)) return false;
@@ -143,8 +143,8 @@ public class HasItemRequirement extends Requirement {
         List<String> loreX = metaToCheck.getLore();
         if (loreX == null) return false;
 
-        String lore = wrapper.getLoreList().stream().map(holder::setPlaceholdersAndArguments).map(StringUtils::color).collect(Collectors.joining("&&"));
-        String loreToCheck = loreX.stream().map(holder::setPlaceholdersAndArguments).map(StringUtils::color).collect(Collectors.joining("&&"));
+        String lore = wrapper.getLoreList().stream().map(holder::setPlaceholdersAndArguments).map(s -> StringUtils.color(s, holder.isMiniMessage())).collect(Collectors.joining("&&"));
+        String loreToCheck = loreX.stream().map(holder::setPlaceholdersAndArguments).map(s -> StringUtils.color(s, holder.isMiniMessage())).collect(Collectors.joining("&&"));
 
         if (wrapper.checkLoreContains() && wrapper.checkLoreIgnoreCase()) {
           if (!org.apache.commons.lang3.StringUtils.containsIgnoreCase(loreToCheck, lore)) return false;
@@ -161,8 +161,8 @@ public class HasItemRequirement extends Requirement {
         List<String> loreX = metaToCheck.getLore();
         if (loreX == null) return false;
 
-        String lore = StringUtils.color(holder.setPlaceholdersAndArguments(wrapper.getLore()));
-        String loreToCheck = loreX.stream().map(holder::setPlaceholdersAndArguments).map(StringUtils::color).collect(Collectors.joining("&&"));
+        String lore = StringUtils.color(holder.setPlaceholdersAndArguments(wrapper.getLore()), holder.isMiniMessage());
+        String loreToCheck = loreX.stream().map(holder::setPlaceholdersAndArguments).map(s -> StringUtils.color(s, holder.isMiniMessage())).collect(Collectors.joining("&&"));
 
         if (wrapper.checkLoreContains() && wrapper.checkLoreIgnoreCase()) {
           return org.apache.commons.lang3.StringUtils.containsIgnoreCase(loreToCheck, lore);

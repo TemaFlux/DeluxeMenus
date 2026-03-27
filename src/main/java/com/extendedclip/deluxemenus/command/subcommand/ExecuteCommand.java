@@ -83,7 +83,9 @@ public class ExecuteCommand extends SubCommand {
             return;
         }
 
-        final ClickActionTask actionTask = new ClickActionTask(plugin, target.getUniqueId(), action.getType(), action.getExecutable(), holder.getTypedArgs(), true, true);
+        final boolean minimessage = holder.isMiniMessage();
+
+        final ClickActionTask actionTask = new ClickActionTask(plugin, target.getUniqueId(), action.getType(), action.getExecutable(), holder.getTypedArgs(), true, true, minimessage);
 
         if (action.hasDelay()) {
             actionTask.runTaskLater(plugin, this, action.getDelay(holder));

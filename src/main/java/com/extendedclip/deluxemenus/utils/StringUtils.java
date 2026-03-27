@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Color;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,28 @@ public class StringUtils {
      */
     @NotNull
     public static String color(@NotNull String input) {
+        return color(input, false);
+    }
+
+    /**
+     * Translates color codes using either Legacy formatting or MiniMessage.
+     *
+     * @param input The string in which to translate the color codes.
+     * @param minimessage If true, parse colors via Adventure's MiniMessage.
+     * @return The string with the translated colors.
+     */
+    @NotNull
+    public static String color(@NotNull String input, boolean minimessage) {
         if (StringUtils.isBlank(input)) return input;
+
+        if (minimessage) {
+            try {
+                return LegacyComponentSerializer.builder().hexColors().useUnusualXRepeatedCharacterHexFormat().build()
+                        .serialize(MiniMessage.miniMessage().deserialize(input));
+            } catch (Exception ignored) {
+                // ignored
+            }
+        }
 
         // Hex Support for 1.16.1+
         Matcher m = HEX_PATTERN.matcher(input);
