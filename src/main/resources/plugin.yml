@@ -9,7 +9,7 @@ folia-supported: true
 commands:
   deluxemenus:
     description: DeluxeMenus main commands
-    aliases: [ dm, deluxemenu, dmenu ]
+    aliases: [ dmenu ]
 permissions:
   deluxemenus.admin:
     description: admin commands
