@@ -21,6 +21,8 @@ import java.net.URL;
 import java.util.Base64;
 import java.util.UUID;
 
+import static com.extendedclip.deluxemenus.utils.VersionHelper.IS_PAPER;
+
 public class SkullUtils {
 
     private static final Gson GSON = new Gson();
@@ -64,6 +66,15 @@ public class SkullUtils {
             return head;
         }
 
+        if (IS_PAPER) {
+            final com.destroystokyo.paper.profile.PlayerProfile paperProfile =
+                    Bukkit.createProfile(UUID.nameUUIDFromBytes(base64Url.getBytes()), null);
+            paperProfile.setProperty(new com.destroystokyo.paper.profile.ProfileProperty("textures", base64Url));
+            headMeta.setPlayerProfile(paperProfile);
+            head.setItemMeta(headMeta);
+            return head;
+        }
+
         final GameProfile profile = getGameProfile(base64Url);
         final Field profileField;
         try {
@@ -92,6 +103,18 @@ public class SkullUtils {
             if (url == null) return null;
 
             return url.toString().substring("https://textures.minecraft.net/texture/".length() - 1);
+        }
+
+        if (IS_PAPER) {
+            final com.destroystokyo.paper.profile.PlayerProfile paperProfile = meta.getPlayerProfile();
+            if (paperProfile == null) return null;
+
+            for (com.destroystokyo.paper.profile.ProfileProperty property : paperProfile.getProperties()) {
+                if (property.getName().equals("textures")) {
+                    return decodeSkinUrl(property.getValue());
+                }
+            }
+            return null;
         }
 
         GameProfile profile;
