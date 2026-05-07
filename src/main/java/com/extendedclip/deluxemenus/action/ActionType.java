@@ -40,6 +40,8 @@ public enum ActionType {
   PLAY_RAW_SOUND("[rawsound]", "Play a RAW sound for a the specific player", "- '[rawsound]"),
   TAKE_MONEY("[takemoney]", "Take money from a player (requires Vault)", "- '[takemoney] <amount>"),
   GIVE_MONEY("[givemoney]", "Give money to a player (requires Vault)", "- '[givemoney] <amount>"),
+  TAKE_ITEM("[takeitem]", "Take items from a player by material (ignores NBT)",
+      "- '[takeitem] <material> <amount>'"),
   TAKE_EXP("[takeexp]", "Take exp points/levels from a player", "- '[takeexp] <amount>L'"),
   GIVE_EXP("[giveexp]", "Give exp points/levels to a player", "- '[giveexp] <amount>L'"),
   TAKE_PERM("[takepermission]", "Take a permission from a player (requires Vault)", "- '[takepermission] <permission>'"),

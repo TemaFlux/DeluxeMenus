@@ -7,8 +7,10 @@ import com.extendedclip.deluxemenus.persistentmeta.PersistentMetaHandler;
 import com.extendedclip.deluxemenus.utils.*;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -293,6 +295,48 @@ public class ClickActionTask implements Runnable {
                 }
 
                 holder.get().refreshMenu();
+                break;
+
+            case TAKE_ITEM:
+                final String[] takeItemParts = executable.split(" ");
+                if (takeItemParts.length < 1 || takeItemParts[0].isBlank()) {
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Take item action requires a material!");
+                    break;
+                }
+
+                final Material takeMaterial = Material.matchMaterial(takeItemParts[0]);
+                if (takeMaterial == null) {
+                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Invalid material for take item action: " + takeItemParts[0]);
+                    break;
+                }
+
+                int takeAmount = 1;
+                if (takeItemParts.length >= 2) {
+                    try {
+                        takeAmount = Integer.parseInt(takeItemParts[1]);
+                    } catch (final NumberFormatException exception) {
+                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Amount for take item action: " + takeItemParts[1] + ", is not a valid number!");
+                        break;
+                    }
+                }
+
+                if (takeAmount <= 0) break;
+
+                int remaining = takeAmount;
+                final ItemStack[] contents = player.getInventory().getContents();
+                for (int i = 0; i < contents.length && remaining > 0; i++) {
+                    final ItemStack stack = contents[i];
+                    if (stack == null || stack.getType() != takeMaterial) continue;
+
+                    final int stackAmount = stack.getAmount();
+                    if (stackAmount > remaining) {
+                        stack.setAmount(stackAmount - remaining);
+                        remaining = 0;
+                    } else {
+                        player.getInventory().setItem(i, null);
+                        remaining -= stackAmount;
+                    }
+                }
                 break;
 
             case TAKE_MONEY:
